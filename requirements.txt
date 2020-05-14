@@ -1,5 +1,4 @@
 sphinx
-sphinxcontrib-spelling
 sphinxcontrib-plantuml
 
 ###
