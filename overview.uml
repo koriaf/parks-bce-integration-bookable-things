@@ -1,0 +1,58 @@
+@startuml
+   component "Parks Australia" as pa
+   component BCE
+
+   interface "<<UI>>\nTrade\nPortal" as tpui
+   tpui -- pa
+   interface "<<API>>\nFRAPI+" as frapi
+   frapi -- pa
+
+   actor "BCE\nadmin" as bce_admin
+   usecase "manage\nAPI\nkeys" as uc_api_keys #lightblue
+   bce_admin -down-> uc_api_keys
+   uc_api_keys -down-> tpui
+   uc_api_keys -up-> BCE
+
+   usecase "check\navailability" as uc1 #lightgreen
+   BCE -down-> uc1
+   uc1 -down-> frapi
+
+   usecase "create\npending\nbooking" as uc2 #lightgreen
+   BCE -down-> uc2
+   uc2 -down-> frapi
+
+   usecase "finalise\nbooking" as uc3 #lightgreen
+   BCE -down-> uc3
+   uc3 -down-> frapi
+
+   usecase "create or update\ndetailed information\nabout booking" as uc4 #lightgreen
+   BCE -down-> uc4
+   uc4 -down-> frapi
+
+   usecase "get list of\nbookable things" as uc5 #lightgreen
+   BCE -down-> uc5
+   uc5 -down-> frapi
+
+   actor "Parks\nStaff" as tpu
+   usecase "confirm or deny\npending booking" as uc6 #lightgreen
+   tpu -up-> uc6
+   uc6 -up-> tpui
+
+   actor "Parks\nAdmin" as padmin
+   usecase "configure\nbookable\nthings" as uc7 #lightgreen
+   padmin -up-> uc7
+   uc7 -up-> tpui
+
+   usecase "configure bookable\neducation experiences\nin BCE" as uc8 #lightblue
+   tpu .up.> uc8
+   uc8 .down.> BCE
+
+   usecase "manage bookings\ndirectly in BCE" as uc9 #lightblue
+   tpu .up.> uc9
+   uc9 .down.> BCE
+
+   actor "Visiting\nEducator" as teach
+   usecase "search and book\neducational experiences\nusing BCE" as uc10 #lightblue
+   teach -down-> uc10
+   uc10 -down-> BCE
+@enduml

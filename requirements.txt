@@ -1,0 +1,7 @@
+sphinx
+sphinxcontrib-spelling
+sphinxcontrib-plantuml
+
+###
+# please `apt-get install plantuml` as well
+##
