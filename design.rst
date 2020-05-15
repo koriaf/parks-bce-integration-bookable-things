@@ -81,16 +81,28 @@ Booking
    Made by an Agent
    on behalf of a Customer.
 
-Statechart of a booking:
+
+booking statechart
+------------------
 
 .. uml::
 
    [*] --> pending
+   note "new pending bookings\ncan be created\nin the Parks System\nby Agents (like BCE)" as N1
+   N1 --> pending
    pending --> denied
-   denied --> [*]
    pending --> accepted
-   accepted --> completed
-   completed --> [*]
    pending --> cancelled
-   cancelled --> [*]
    accepted --> cancelled
+   accepted --> completed
+   note "pending bookings can be cancelled\nby the Agent who made them,\nbut accepted bookings can only\nbe cancelled by the DeliveryOrg\nassociated with the Bookable Thing" as N2
+   N2 --> cancelled
+   denied --> [*]
+   completed --> [*]
+   cancelled --> [*]
+   note "accepted bookings can be completed\nby the Agent who made them, or by\nthe responsible Delivery Org.\nWhen completed, the Agent may\nprovide aditional information about\nthe booking (post-facto)" as N3
+   N3 --> completed
+   note "only the Delivery Org\ncan accept a booking" as N4
+   N4 --> accepted
+   note "only the Delivery Org\ncan deny a booking" as N5
+   denied --> N5
