@@ -4,36 +4,41 @@ Design
 This is the logical model,
 from the perspective of the Parks System.
 
+(blue classes already exist, green ones are new)
+
 .. uml::
 
-   class BookableThing
-   class Park {
+   class BookableThing #lightgreen
+   class Park #lightblue {
      e.g. ANBG
    }
    Park o-- BookableThing
 
-   class DeliveryOrg {
+   class DeliveryOrg #lightblue {
      e.g. ANBG Education Officers
+     like existing CTO
    }
    DeliveryOrg o-- BookableThing
    
-   class Booking {
+   class Booking #lightgreen {
      status
      start_time
      end_time
    }
    BookableThing o-- Booking
-   class Availability {
+   class Availability #lightgreen {
      start_time
      end_time
    }
    BookableThing o-- Availability
-   class Agent {
+   class Agent #lightblue {
      e.g. BCE
+     like existing RSA
    }
    Agent o-- Booking
-   class Customer {
+   class Customer #lightblue {
      e.g. Hogwarts
+     like existing party
    }
    Customer o-- Booking
 
