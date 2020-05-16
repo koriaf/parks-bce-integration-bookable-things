@@ -85,6 +85,9 @@ Booking
 booking statechart
 ------------------
 
+Note that the booking has a **status** attribute.
+This will have one of the following 5 values:
+
 .. uml::
 
    [*] --> pending
