@@ -120,8 +120,13 @@ to hit it as often as they like.
    like `YYYY-MM-DD`.
    Actually the hyphens are optional too,
    `YYYYMMDD` will also work.
-   If you actually to filter by a time of day,
+   
+   If you actually want to filter by a time of day,
    you have to do it on the client side.
+   This shouldn't be too bad because
+   the list of available time slots
+   for the given thing on a given day
+   should be reasonably small.
 
    You can the fact we ignore the time of day
    to bust our cache (CDN).
