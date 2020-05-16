@@ -123,7 +123,15 @@ to hit it as often as they like.
    If you actually to filter by a time of day,
    you have to do it on the client side.
 
-   If no "until" parameter given,
+   You can the fact we ignore the time of day
+   to bust our cache (CDN).
+   Maybe this will help you debug something.
+
+   *(note to self:
+   remember to memory-cache our DB queries
+   to prevent explicit-microsecond DOSsing)*
+
+   If no "until" parameter is given,
    then either for all of the future
    or some sensible default will be used.
    This is not entirely defined,
