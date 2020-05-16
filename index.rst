@@ -6,7 +6,6 @@ parks-bce-integration-bookable-things
    :caption: Contents:
 
    overview
-   requirements
-   design
-   security
    api
+   security
+   design

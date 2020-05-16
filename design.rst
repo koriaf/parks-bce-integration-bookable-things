@@ -1,5 +1,5 @@
-Design
-======
+Logical Model
+=============
 
 This is the logical model,
 from the perspective of the Parks System.
