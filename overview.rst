@@ -23,3 +23,7 @@ that are required to acomplish the integration.
 
 .. uml:: overview.uml
 
+This document lives at https://github.com/gs-gs/parks-bce-integration-bookable-things
+
+Feel free to raise tickets.
+Pull requests welcome.
