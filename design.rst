@@ -106,6 +106,12 @@ This will have one of the following 5 values:
    note "accepted bookings can be completed\nby the Agent who made them, or by\nthe responsible Delivery Org.\nWhen completed, the Agent may\nprovide aditional information about\nthe booking (post-facto)" as N3
    N3 --> completed
    note "only the Delivery Org\ncan accept a booking" as N4
-   N4 --> accepted
+   accepted --> N4
    note "only the Delivery Org\ncan deny a booking" as N5
-   denied --> N5
+   N5 --> denied
+   state "pending\ncancellation\nrequested" as pcr
+   pending --> pcr
+   pcr --> cancelled
+   pcr --> accepted
+   note "if the booking is pending,\nthe Agent may request cancellation.\nHowever, it may be too late for\nthe Delivery Org to Cancel.\nIn this situation, the delivery org\nmay chose to cancell or accept a\nbookings with cancellaton requested" as N6
+   N6 -> pcr
