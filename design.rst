@@ -127,3 +127,156 @@ This will have one of the following 6 values:
 **orange**: Agents or Delivery Orgs can do this.
 
 **yellow**: Agents or Delivery orgs can do this, with conditions.
+
+
+note about organisations
+------------------------
+
+In the existing Parks Australia system, we have users who belong to organisations.
+
+Some organisations are part of a park, other organisations are independent (i.e. commercial partners of the parks). We call these independent organisations CTOs (Commercial Tour Operators) or RSAs (Retail Sales Agents). In practice, CTOs and RSAs are typically associated with one part, but some of the larger ones operate across multiple parks.
+
+.. uml::
+
+   abstract class "generic\norganisation" as org {
+     org_id
+   }
+   class "Park\nTeam" as pt extends org {
+     org_id
+     park_id
+   }
+   abstract class "Trade\nPartner" as trade extends org {
+     org_id
+   }
+   class "CTO" as cto extends trade {
+     org_id
+   }
+   class "RSA" as rsa extends trade {
+     org_id
+   }
+
+   class "Park" as park {
+     park_id
+   }
+   pt --* park
+
+   class "Commercial\nPermit" as cp {
+     park_id
+     cto_org_id
+   }
+   park *-- cp
+   cto *-- cp
+
+CTOs have a **Commercial Permit** to operate tours in the park.
+Logically, Commercial Tours are bookable things too.
+So we actually have two kinds of bookable things,
+**Park Bookables** (where the park team is the delivery org)
+and **Partner Bookables** (where the CTO is the delivery org).
+
+.. uml::
+
+   class "CTO" as cto <<org>> {
+      org_id
+   }
+   class "Park\nTeam" as pt <<org>> {
+      org_id
+      park_id
+   }
+   class "Park" as park {
+      park_id
+   }
+   pt --* park
+   class "Commercial\nPermit" as cp {
+      park_id
+      cto_org_id
+      valid_from
+      valid_until
+      status
+   }
+   park *-- cp
+   cto *-- cp
+
+   abstract class "Bookable\nThing" as bt {
+      bookable_thing_id
+   }
+   class "Park\nBookable" as park_bt extends bt {
+      bookable_thing_id
+      park_org_id
+   }
+   class "Partner\nBookable" as partner_bt extends bt {
+      bookable_thing_id
+      cto_org_id
+   }
+   pt <-- park_bt
+   cto <-- partner_bt
+
+Note how the Commercial Permit has a validity period.
+This means we can limit the CTO from creating availabilities
+outside the validity period of their Commercial Permit(s).
+
+
+.. uml::
+
+   class "CTO" as cto <<org>> {
+      org_id
+   }
+   class "Park\nTeam" as pt <<org>> {
+      org_id
+      park_id
+   }
+   class "Park" as park {
+      park_id
+   }
+   pt --* park
+   class "Commercial\nPermit" as cp {
+      park_id
+      cto_org_id
+      valid_from
+      valid_until
+      status
+   }
+   park *-- cp
+   cto *-- cp
+
+   class "Park\nBookable" as park_bt {
+      bookable_thing_id
+      park_org_id
+   }
+   class "Partner\nBookable" as partner_bt {
+      bookable_thing_id
+      cto_org_id
+   }
+   pt <-- park_bt
+   cto <-- partner_bt
+
+   abstract class "Availability" as availability {
+      bookable_thing_id
+      from_datetime
+      to_datetime
+      status()
+   }
+   note "status() reflects bookings\n(availability may be negated)" as N0
+   N0 .. availability
+   class "Park\nBookable\nAvailability" as park_availability extends availability {
+      bookable_thing_id
+      from_datetime
+      to_datetime
+      status()
+   }
+   
+   class "Partner\nBookable\nAvailability" as partner_availability extends availability {
+      bookable_thing_id
+      from_datetime
+      to_datetime
+      status()
+   }
+   park_bt <-- park_availability
+   partner_bt <-- partner_availability
+
+   note "check constraint:\npartner bookable availabilities can\nonly be created for times when\na valid Commercial Permit exists." as N1
+   partner_availability .. N1
+   cp .. N1
+   note "when permit status changes,\nthen the derived status()\nof the partner availability\nmay change too.\ne.g. if a permit status is revoked,\ntheir tours may be unbookable,\nexisting bookings may become\ncancellations pending, etc." as N2
+   partner_availability .. N2
+   cp .. N2
+   
