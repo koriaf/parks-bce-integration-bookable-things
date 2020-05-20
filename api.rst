@@ -1,9 +1,18 @@
-API
-===
+API Requirements
+================
 
-TODO: document the API used by BCE
+This shows how the API is used
+by booking Agents (such as BCE)
 to create and manage bookings
-in the ANBG systems.
+in the Parks Australia systems.
+
+.. uml:: api_overview.uml
+
+.. admonition:: N.B.
+
+   These API's reqire an access key.
+   Access keys are managed via the trade portal UI.
+   See the **Security** page for details.
 
 
 get list of bookable things

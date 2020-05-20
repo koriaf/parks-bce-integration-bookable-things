@@ -86,17 +86,22 @@ booking statechart
 ------------------
 
 Note that the booking has a **status** attribute.
-This will have one of the following 5 values:
+This will have one of the following 6 values:
 
 .. uml::
 
+   state pending #lightblue
    [*] --> pending
    note "new pending bookings\ncan be created\nin the Parks System\nby Agents (like BCE)" as N1
    N1 --> pending
    pending --> denied
+   state denied #lightgreen
    pending --> accepted
+   state cancelled #lightgreen
    pending --> cancelled
    accepted --> cancelled
+   state completed #orange
+   state accepted #lightgreen
    accepted --> completed
    note "pending bookings can be cancelled\nby the Agent who made them,\nbut accepted bookings can only\nbe cancelled by the DeliveryOrg\nassociated with the Bookable Thing" as N2
    N2 --> cancelled
@@ -106,12 +111,17 @@ This will have one of the following 5 values:
    note "accepted bookings can be completed\nby the Agent who made them, or by\nthe responsible Delivery Org.\nWhen completed, the Agent may\nprovide aditional information about\nthe booking (post-facto)" as N3
    N3 --> completed
    note "only the Delivery Org\ncan accept a booking" as N4
-   accepted --> N4
+   N4 --> accepted
    note "only the Delivery Org\ncan deny a booking" as N5
    N5 --> denied
-   state "pending\ncancellation\nrequested" as pcr
-   pending --> pcr
+   state "pending\ncancellation\nrequested" as pcr #lightblue
    pcr --> cancelled
-   pcr --> accepted
+   accepted --> pcr
    note "if the booking is pending,\nthe Agent may request cancellation.\nHowever, it may be too late for\nthe Delivery Org to Cancel.\nIn this situation, the delivery org\nmay chose to cancell or accept a\nbookings with cancellaton requested" as N6
-   N6 -> pcr
+   N6 -up-> pcr
+
+**light green**: Only the Delivery Org can do this.
+
+**light blue**: Agents can do this.
+
+**orange**: Agents or Delivery Orgs can do this.

@@ -1,0 +1,28 @@
+@startuml
+   component "Parks\nAustralia\nSystem" as pa
+   actor "Booking\nAgent's\nSystem" as BCE
+
+   interface "<<API>>\nFRAPI+" as frapi
+   frapi -- pa
+
+   usecase "check\navailability" as uc1 #lightgreen
+   BCE -down-> uc1
+   uc1 -down-> frapi
+
+   usecase "create\npending\nbooking" as uc2 #lightgreen
+   BCE -down-> uc2
+   uc2 -down-> frapi
+
+   usecase "finalise\nbooking" as uc3 #lightgreen
+   BCE -down-> uc3
+   uc3 -down-> frapi
+
+   usecase "create or update\ndetailed information\nabout booking" as uc4 #lightgreen
+   BCE -down-> uc4
+   uc4 -down-> frapi
+
+   usecase "get list of\nbookable things" as uc5 #lightgreen
+   BCE -down-> uc5
+   uc5 -down-> frapi
+
+@enduml
