@@ -97,7 +97,7 @@ This will have one of the following 6 values:
    pending --> denied
    state denied #lightgreen
    pending --> accepted
-   state cancelled #lightgreen
+   state cancelled #yellow
    pending --> cancelled
    accepted --> cancelled
    state completed #orange
@@ -125,3 +125,5 @@ This will have one of the following 6 values:
 **light blue**: Agents can do this.
 
 **orange**: Agents or Delivery Orgs can do this.
+
+**yellow**: Agents or Delivery orgs can do this, with conditions.
