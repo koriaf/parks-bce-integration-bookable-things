@@ -1,6 +1,7 @@
 sphinx
 sphinxcontrib-plantuml
 sphinxcontrib-httpdomain
+plantuml
 
 ###
 # please `apt-get install plantuml` as well
