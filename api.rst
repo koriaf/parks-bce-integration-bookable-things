@@ -26,8 +26,8 @@ Also, when doing request user is probably aware of some organisation ID (short n
 
 Note: we don't support pagination yet but it will be done soon, stay alert.
 
-get list of bookable things
----------------------------
+Bookable things list
+--------------------
 ..for this team, for this park (ANBG)
 
 .. code-block:: gherkin
@@ -73,35 +73,96 @@ get list of bookable things
   empty results set will be returned. We probably should return 404 or 400 in that
   case - a matter to discuss.
 
-  The response has the next format::
+  Response example::
 
-    [
-      {
-        "id": 2,
-        "type": "park",
-        "park": "kakadu",
-        "delivery_org": "Bowali",
-        "name": "Naidoc Week",
-        "short_description": "",
-        "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
-        "contact": "",
+    {
+      "count": 2,
+      "next": null,
+      "previous": null,
+      "results": [
+        {
+          "id": 2,
+          "type": "park",
+          "park": "kakadu",
+          "delivery_org": "Bowali",
+          "name": "Naidoc Week",
+          "short_description": "",
+          "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
+          "contact": "",
+          "unit": "person",
+          "cost_per_unit": "6.00"
+        },
+        {
+          "id": 1,
+          "type": "park",
+          "park": "kakadu",
+          "delivery_org": "Bowali",
+          "name": "Taste of Kakadu\tFestival Opening Night",
+          "short_description": "",
+          "image": null,
+          "contact": "",
+          "unit": "person",
+          "cost_per_unit": "21.00"
+        }
+      ]
+    }
+
+
+Bookable thing creation
+-----------------------
+
+.. http:post:: /
+
+  The current organisation becomes delivery_org. customer field will
+  be explained later. All fields not listed here are readonly.
+  Success is 201, error is 4xx (subject to change and specific codes will be used)
+
+  Minimal request example::
+
+    {
+        "name": "First Bookable",
         "unit": "person",
-        "cost_per_unit": "6.00"
-      },
-      {
-        "id": 1,
-        "type": "park",
-        "park": "kakadu",
-        "delivery_org": "Bowali",
-        "name": "Taste of Kakadu\tFestival Opening Night",
-        "short_description": "",
-        "image": null,
-        "contact": "",
+        "park": "kakadu"
+    }
+
+  Full request example::
+
+    {
+        "name": "First Bookable '${NOW}'",
         "unit": "person",
-        "cost_per_unit": "21.00"
+        "park": "kakadu",
+        "short_description": "night walk",
+        "cost_per_unit": "55.00"
+    }
+
+
+  Error response example::
+
+    {"code":"FRS-400","title":"ValidationError","detail":{"name":["This field is required."],"unit":["This field is required."]}}
+
+    {"detail":"JSON parse error - Expecting property name enclosed in double quotes: line 6 column 5 (char 141)"}
+
+    {
+      "code": "FRS-400",
+      "title": "ValidationError",
+      "detail": {
+        "non_field_errors": [
+          "The fields park, name must make a unique set."
+        ]
       }
-    ]
+    }
 
+    {
+      "code": "FRS-400",
+      "title": "ValidationError",
+      "detail": {
+        "park": [
+          "This park is unknown to this org"
+        ]
+      }
+    }
+
+  Response - created bookable thing details
 
 
 Bookable thing details
@@ -109,11 +170,12 @@ Bookable thing details
 
 .. http:get:: /(bookable_id)/
 
-  Returns the same response format as the previous endpoint but for the single object.
+  Returns the same response format as the previous endpoint
+  but for the single object.
 
 
-check availability of bookable thing
-------------------------------------
+check availability of bookable thing (slots list)
+-------------------------------------------------
 
 .. code-block:: gherkin
 
@@ -192,20 +254,34 @@ to hit it as often as they like.
 
    Response example::
 
-    [
-      {
-        "start_time": "2020-05-28T12:00:00+10:00",
-        "end_time": "2020-05-28T13:00:00+10:00",
-        "max_units": 1,
-        "reserved_units": 1
-      },
-      {
-        "start_time": "2020-05-28T17:00:00+10:00",
-        "end_time": "2020-05-28T18:00:00+10:00",
-        "max_units": 1,
-        "reserved_units": 1
-      }
-    ]
+    {
+      "count": 3,
+      "next": null,
+      "previous": null,
+      "results": [
+        {
+          "id": 1,
+          "start_time": "2020-05-28T12:00:00+10:00",
+          "end_time": "2020-05-28T13:00:00+10:00",
+          "max_units": 2,
+          "reserved_units": 1
+        },
+        {
+          "id": 2,
+          "start_time": "2020-05-28T17:00:00+10:00",
+          "end_time": "2020-05-28T18:00:00+10:00",
+          "max_units": 1,
+          "reserved_units": 1
+        },
+        {
+          "id": 3,
+          "start_time": "2020-05-30T02:50:42+10:00",
+          "end_time": "2020-05-30T05:50:43+10:00",
+          "max_units": 3,
+          "reserved_units": 0
+        }
+      ]
+    }
 
    Notes:
     * not shown: the GET call is made with an API key.
@@ -215,6 +291,34 @@ to hit it as often as they like.
       you will get an error message.
     * it's perfectly fine for the from date
       to be the same as the until date.
+
+
+Create new slot
+---------------
+
+.. http:post:: /{bookable_id}/slots/
+
+  .. code-block:: gherkin
+
+    As a bookable thing owner
+    I'd like to create a new slot
+    so people can reserve it
+
+  Minimal request example::
+
+    {
+      "start_time": "2020-01-01T15:00",
+      "start_time": "2020-01-01T18:00:00"
+    }
+
+  Full request also can include "max_units" (integer) and any other fields from the future.
+
+  Error response examples::
+
+    {"code":"FRS-400","title":"ValidationError","detail":{"start_time":["This field is required."],"end_time":["This field is required."]}}
+
+  Succesfull response contains full slot information
+  in the same format as the slots list returns.
 
 
 Create pending reservation
@@ -245,9 +349,61 @@ List reservations
 -----------------
 
 .. http:get:: /reservations/?from=&until=&park=&booking_id=&agent=&
+.. http:get:: /reservations/created/?from=&until=&park=&booking_id=&agent=&
+.. http:get:: /reservations/received/?from=&until=&park=&booking_id=&agent=&
 
     Return full list of all reservations visible to the current user.
-    Filters are applied.
+    Filters are applied. Reservations are rendered quite deep.
+    Use created/received sub-urls to look at the situation from the different
+    parties point of view: agent making reservatins for client and the
+    amentity owner handling reservations and working to meet all the people
+    coming to see it.
+
+    Response example::
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "id": "9eefbecb-29be-441e-be13-c59870671940",
+              "bookable": {
+                "id": 2,
+                "type": "park",
+                "park": "kakadu",
+                "delivery_org": "Bowali",
+                "name": "Naidoc Week",
+                "short_description": "",
+                "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
+                "contact": "",
+                "unit": "person",
+                "cost_per_unit": "6.00"
+              },
+              "slots": [
+                {
+                  "id": 1,
+                  "start_time": "2020-05-28T12:00:00+10:00",
+                  "end_time": "2020-05-28T13:00:00+10:00",
+                  "max_units": 2,
+                  "reserved_units": 1
+                },
+                {
+                  "id": 2,
+                  "start_time": "2020-05-28T17:00:00+10:00",
+                  "end_time": "2020-05-28T18:00:00+10:00",
+                  "max_units": 1,
+                  "reserved_units": 1
+                }
+              ],
+              "agent": "Australian trade corp",
+              "customer": null,
+              "created_at": "2020-05-28T21:14:05+10:00",
+              "status": "accepted"
+            }
+          ]
+        }
+
 
 
 Update reservation
