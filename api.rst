@@ -16,26 +16,41 @@ in the Parks Australia systems.
 
 Please note that all URLs entered here use empty API prefix. The real one will be something like this::
 
-  https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/bookables/v0/
+  https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/
 
-so for example endpoint ``/reservations`` becomes::
+so for example endpoint ``/reservations/`` becomes::
 
-  https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/bookables/v0/reservations/
+  https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/reservations/
 
 Also, when doing request user is probably aware of some organisation ID (short number) and having some access credentials (either API token or browser session)
 
 Note: we don't support pagination yet but it will be done soon, stay alert.
 
-Bookable things list
---------------------
-..for this team, for this park (ANBG)
+Bookable things
+---------------
+
+An example of bookable thing is Tour, School excursion or Tasting event.
+
+Bookables list
+~~~~~~~~~~~~~~
+..for the current organisation
 
 .. code-block:: gherkin
 
    As a booking agent (like BCE)
-   I need to get a list of bookable things
+   I need to get a list of bookable things visible to me
    so that I can map Spaces to Bookable Things
    and so that I know what resources to check the availability of
+
+.. code-block:: gherkin
+
+   As a delivering organisation
+   I need to get a list of bookable things I created
+   so I can manage them:
+   * manage slots
+   * manage reservations
+   * manage bookable things itself
+
 
 .. uml::
 
@@ -55,7 +70,9 @@ Bookable things list
    BCE -> parks_staff: show options from Parks system
    parks_staff -> BCE: map to bookable things\n(e.g. "spaces")\nin the Agent system
 
-.. http:get:: /?org=(org_id)&park=(park_slug)
+.. http:get:: /bookables/?org=(org_id)&park=(park_slug)&is_archived=true/false/all
+
+  Implemented: everything except filters.
 
   Returns a list of bookable things. GET parameters are optional and filter
   the output.
@@ -64,10 +81,16 @@ Bookable things list
   that identifies the park, e.g. "anbg"
   for the Australian National Botanic Gardens or "kakadu" or "booderee".
 
-  The "org_id" is a short number identifying the organisation.
+  The "org_id" is a short number identifying the organisation to display only
+  bookable things provided by the choosen one. It will be useful mostly for
+  the "Management" scenarion, and any organisation using API is aware of this
+  value for itself.
   In the nearest future we may also use org_slug and org_name filters.
   These will be URL-compatible strings that identifie the organisation
   responsible for the bookable thing. e.g. "anbg-edu-team".
+
+  ``is_archived`` parameter is ALL by default and can be used to access archived
+  bookables.
 
   In case of wrong filters parameter (park doesn't exist, org doesn't exist)
   empty results set will be returned. We probably should return 404 or 400 in that
@@ -90,7 +113,8 @@ Bookable things list
           "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
           "contact": "",
           "unit": "person",
-          "cost_per_unit": "6.00"
+          "cost_per_unit": "6.00",
+          "is_archived": false,
         },
         {
           "id": 1,
@@ -102,19 +126,26 @@ Bookable things list
           "image": null,
           "contact": "",
           "unit": "person",
-          "cost_per_unit": "21.00"
+          "cost_per_unit": "21.00",
+          "is_archived": false,
         }
       ]
     }
 
 
-Bookable thing creation
------------------------
+Bookable creation
+~~~~~~~~~~~~~~~~~
 
-.. http:post:: /
+.. http:post:: /bookables/
 
-  The current organisation becomes delivery_org. customer field will
-  be explained later. All fields not listed here are readonly.
+.. code-block:: gherkin
+
+   As a delivering organisation
+   I want to create a "Bookable Thing"
+   so agent organisation can book my time
+
+  The current organisation becomes ``delivery_org``. ``customer`` field will
+  be explained later. All fields not listed here are readonly or optional.
   Success is 201, error is 4xx (subject to change and specific codes will be used)
 
   Minimal request example::
@@ -134,6 +165,8 @@ Bookable thing creation
         "short_description": "night walk",
         "cost_per_unit": "55.00"
     }
+
+  Success response: the same as the Bookables list endpoint but without pagination.
 
 
   Error response example::
@@ -162,20 +195,55 @@ Bookable thing creation
       }
     }
 
-  Response - created bookable thing details
 
+Bookable details
+~~~~~~~~~~~~~~~~
 
-Bookable thing details
-----------------------
-
-.. http:get:: /(bookable_id)/
+.. http:get:: /bookables/(bookable_id)/
 
   Returns the same response format as the previous endpoint
   but for the single object.
 
 
-check availability of bookable thing (slots list)
--------------------------------------------------
+Bookable update
+~~~~~~~~~~~~~~~
+
+.. http:patch:: /bookables/(bookable_id)/
+
+  Payload: set of non-readonly fields (like "short_description")
+
+  Returns the same response format as the GET method in case of success (code 200) or
+  error message if any happened (code 4xx).
+
+
+Bookable delete
+~~~~~~~~~~~~~~~
+
+.. http:delete:: /bookables/(bookable_id)/
+
+  Payload: none.
+
+  Returns: empty response with 204 code or 4xx error message.
+
+  In case of no reservations created the bookable and all its slots are deleted.
+  In case of at least one reservation (including not confirmed) present the bookable
+  is marked as "is_archived" and will not be shown in the bookables list by default,
+  but it's possible to display archived as well. Archived bookables can't accept any more reservations.
+
+
+Slots
+-----
+
+Slot is just a start-end datetime pair with some extra data attached.
+Reservations are created against one or more slots.
+
+
+Slots list
+~~~~~~~~~~
+
+(check availability of bookable thing)
+
+Implemented: everything except filters.
 
 .. code-block:: gherkin
 
@@ -207,7 +275,7 @@ to hit it as often as they like.
    get_availability -> BCE: json data
 
 
-.. http:get:: /(bookable_id)/slots/?from=(date: from_date)&until=(date: to_date)
+.. http:get:: /bookables/(bookable_id)/slots/?from=(date: from_date)&until=(date: to_date)
 
    Returns a list of available time slots
    for a bookable thing,
@@ -221,9 +289,9 @@ to hit it as often as they like.
    and until tomorrow includes tomorrow's.
 
    The "from" and "until" parameters
-   may be an ISO-8601 date string,
-   (`YYYY-MM-DD`). Having dates here help us to cache things,
-   please do more detailed filtering by times on the client side.
+   may be an ISO-8601 date string (`YYYY-MM-DD`).
+   Having dates here help us to cache things,
+   please do more detailed filtering on the client side.
    Regarding the timezone: the server timezone will be used, so for night
    events it's practical to get the previous and the next days (if you are not sure).
 
@@ -250,7 +318,7 @@ to hit it as often as they like.
    Regarding max and reserved units: some bookables support multiple persons
    or groups at the same time, so if ``reserved_units`` value is less than max then it
    still can be reserved. We return fully booked slots as well for informational
-   reasons - some reservations may be cancelled.
+   reasons - some reservations may be cancelled so worth to check later.
 
    Response example::
 
@@ -284,7 +352,6 @@ to hit it as often as they like.
     }
 
    Notes:
-    * not shown: the GET call is made with an API key.
     * if the bookable thing doesn't exist, 404
     * if there are no slots defined then the empty list is returned.
     * if the from date is after the until date
@@ -293,16 +360,16 @@ to hit it as often as they like.
       to be the same as the until date.
 
 
-Create new slot
----------------
+Slot create
+~~~~~~~~~~~
 
-.. http:post:: /{bookable_id}/slots/
+.. http:post:: /bookables/(bookable_id)/slots/
 
   .. code-block:: gherkin
 
     As a bookable thing owner
-    I'd like to create a new slot
-    so people can reserve it
+    I'd like to create a new slot and specify time for it
+    so people can make reservations for it
 
   Minimal request example::
 
@@ -311,7 +378,7 @@ Create new slot
       "start_time": "2020-01-01T18:00:00"
     }
 
-  Full request also can include "max_units" (integer) and any other fields from the future.
+  Full request also can include "max_units" (integer) and other fields (future API versions).
 
   Error response examples::
 
@@ -321,10 +388,90 @@ Create new slot
   in the same format as the slots list returns.
 
 
-Create pending reservation
---------------------------
+Reservation
+-----------
+
+Reservation is a representation of fact that somebody will come to an event.
+Always created for given bookable and given slots set (one or more).
+Has some status flow (from pending to completed) and it's expected
+that both parties (reservation initiator and bookable thing delivery org)
+update them based on the status flow.
+
+Please note that the reservation IDs are string, not integer field, containing
+some unique value (typically UUID but we won't guarantee it)
+
+Reservations list
+~~~~~~~~~~~~~~~~~
+
+Implemented: except filters (but the created-received should work).
+
+.. http:get:: /reservations/?from=&until=&park=&booking_id=&agent=&
+.. http:get:: /reservations/created/?from=&until=&park=&booking_id=&agent=&
+.. http:get:: /reservations/received/?from=&until=&park=&booking_id=&agent=&
+
+    Return full list of all reservations visible to the current user.
+    Filters are applied. Reservations are rendered quite deep for convenience.
+    Use created/received sub-urls to look at the situation from the different
+    parties point of view: agent making reservatins for client and the
+    amentity owner handling reservations and working to meet all the people
+    coming to see it.
+
+    Response example::
+
+      {
+        "count": 1,
+        "next": null,
+        "previous": null,
+        "results": [
+          {
+            "id": "9eefbecb-29be-441e-be13-c59870671940",
+            "bookable": {
+              "id": 2,
+              "type": "park",
+              "park": "kakadu",
+              "delivery_org": "Bowali",
+              "name": "Naidoc Week",
+              "short_description": "",
+              "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
+              "contact": "",
+              "unit": "person",
+              "cost_per_unit": "6.00"
+            },
+            "slots": [
+              {
+                "id": 1,
+                "start_time": "2020-05-28T12:00:00+10:00",
+                "end_time": "2020-05-28T13:00:00+10:00",
+                "max_units": 2,
+                "reserved_units": 1
+              },
+              {
+                "id": 2,
+                "start_time": "2020-05-28T17:00:00+10:00",
+                "end_time": "2020-05-28T18:00:00+10:00",
+                "max_units": 1,
+                "reserved_units": 1
+              }
+            ],
+            "agent": "Australian trade corp",
+            "customer": null,
+            "created_at": "2020-05-28T21:14:05+10:00",
+            "status": "accepted"
+          }
+        ]
+      }
+
+
+Reservation create
+~~~~~~~~~~~~~~~~~~
 
 .. http:post:: /reservations/
+
+  .. code-block:: gherkin
+
+    As an agent
+    I need to create reservation for my clients
+    So the delivery organisation is aware that they will come
 
   The request example::
 
@@ -340,74 +487,15 @@ Create pending reservation
   Response will contain the sent data + all other fields
   (some of them filled automatically, some of them empty).
 
+  "Customer" field is not much defined currently but will contain some data
+  useful for both parties to identify the coming people.
+
   The original agent (booking creator) and the bookable delivery organisation
   will be able to update it (change status, provide more details, etc).
 
 
-
-List reservations
------------------
-
-.. http:get:: /reservations/?from=&until=&park=&booking_id=&agent=&
-.. http:get:: /reservations/created/?from=&until=&park=&booking_id=&agent=&
-.. http:get:: /reservations/received/?from=&until=&park=&booking_id=&agent=&
-
-    Return full list of all reservations visible to the current user.
-    Filters are applied. Reservations are rendered quite deep.
-    Use created/received sub-urls to look at the situation from the different
-    parties point of view: agent making reservatins for client and the
-    amentity owner handling reservations and working to meet all the people
-    coming to see it.
-
-    Response example::
-
-        {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "id": "9eefbecb-29be-441e-be13-c59870671940",
-              "bookable": {
-                "id": 2,
-                "type": "park",
-                "park": "kakadu",
-                "delivery_org": "Bowali",
-                "name": "Naidoc Week",
-                "short_description": "",
-                "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
-                "contact": "",
-                "unit": "person",
-                "cost_per_unit": "6.00"
-              },
-              "slots": [
-                {
-                  "id": 1,
-                  "start_time": "2020-05-28T12:00:00+10:00",
-                  "end_time": "2020-05-28T13:00:00+10:00",
-                  "max_units": 2,
-                  "reserved_units": 1
-                },
-                {
-                  "id": 2,
-                  "start_time": "2020-05-28T17:00:00+10:00",
-                  "end_time": "2020-05-28T18:00:00+10:00",
-                  "max_units": 1,
-                  "reserved_units": 1
-                }
-              ],
-              "agent": "Australian trade corp",
-              "customer": null,
-              "created_at": "2020-05-28T21:14:05+10:00",
-              "status": "accepted"
-            }
-          ]
-        }
-
-
-
-Update reservation
-------------------
+Reservation update
+~~~~~~~~~~~~~~~~~~
 
 .. http:patch:: /reservations/{reservation_id}/
 
@@ -417,10 +505,10 @@ Update reservation
 
   Validations are applied.
 
+  Some common use-cases:
 
-
-
-finalise booking
-----------------
-
-patch status to "completed"
+  * delivery org: accept reservation - update status to "accepted"
+  * delivery org: deny reservation - update status to "denied" (with some note probably)
+  * delivery org: finaize booking after fulfillment (status="completed")
+  * agent: request reservation cancellation (status="cancellation_requested")
+  * delivery_org: confirm reservation cancellation (status="cancelled")
