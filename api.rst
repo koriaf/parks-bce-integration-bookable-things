@@ -4,7 +4,9 @@ API Requirements
 This shows how the API is used
 by booking Agents (such as BCE)
 to create and manage bookings
-in the Parks Australia systems.
+in the Parks Australia systems,
+and by the delivery organisations
+to manage bookable things and available slots.
 
 .. uml:: api_overview.uml
 
@@ -14,7 +16,11 @@ in the Parks Australia systems.
    Access keys are managed via the trade portal UI.
    See the **Security** page for details.
 
-Please note that all URLs entered here use empty API prefix. The real one will be something like this::
+
+Side notes
+----------
+
+Please note that all URLs described here use empty API prefix. The real one will be something like this::
 
   https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/
 
@@ -22,14 +28,34 @@ so for example endpoint ``/reservations/`` becomes::
 
   https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/reservations/
 
-Also, when doing request user is probably aware of some organisation ID (short number) and having some access credentials (either API token or browser session)
+Also, when doing request user is probably aware of some organisation ID (short number) and having some access credentials (either API token or browser session).
 
-Note: we don't support pagination yet but it will be done soon, stay alert.
+We suport pagination, objects are usually paginated by 50.
+
+Current policy allows reservation creator to update number of people/groups after
+the reservation is confirmed; if this behaviour is a problem for your organisation
+then please contact us.
+
+Base workflow
+
+  * Delivery organisation create bookable thing
+  * Delivery organisation add slots (start-end datetime pair) for the bookable thing
+  * Agent organisation browses bookable things and slots available
+  * Agent organisation places reservations
+  * Delivery org either confirms or denies reservations
 
 Bookable things
 ---------------
 
 An example of bookable thing is Tour, School excursion or Tasting event.
+
+Interesting fields:
+
+* type - is the bookable offered by the official park organisation or an external partner. Informational
+* unit - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
+* cost_per_unit - informational field, AUD per single unit.
+* available_to_agents (boolean) - is another organisation can place reservations. Set to False if you want to (temporary) stop accepting new reservations. The bookable remains visible in the list, but no slots are returned.
+* available_to_public (boolean) - the same logic, but has no meaning while we don't offer the API to public.
 
 Bookables list
 ~~~~~~~~~~~~~~
@@ -235,6 +261,7 @@ Slots
 -----
 
 Slot is just a start-end datetime pair with some extra data attached.
+The start date is usually inclusive while the end date is exclusive.
 Reservations are created against one or more slots.
 
 
@@ -392,7 +419,7 @@ Reservation
 -----------
 
 Reservation is a representation of fact that somebody will come to an event.
-Always created for given bookable and given slots set (one or more).
+They are always created for given bookable and given slots set (one or more).
 Has some status flow (from pending to completed) and it's expected
 that both parties (reservation initiator and bookable thing delivery org)
 update them based on the status flow.
@@ -454,6 +481,7 @@ Implemented: except filters (but the created-received should work).
               }
             ],
             "agent": "Australian trade corp",
+            "units": 1,
             "customer": null,
             "created_at": "2020-05-28T21:14:05+10:00",
             "status": "accepted"
@@ -478,6 +506,7 @@ Reservation create
     {
       "bookable_id": 1,
       "slots": [1, 2, 3],
+      "units": 1,
       "customer": {
         "name": "st. Martin's school"
       }
