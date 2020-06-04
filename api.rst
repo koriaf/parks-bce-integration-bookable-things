@@ -541,3 +541,51 @@ Reservation update
   * delivery org: finaize booking after fulfillment (status="completed")
   * agent: request reservation cancellation (status="cancellation_requested")
   * delivery_org: confirm reservation cancellation (status="cancelled")
+
+
+Reservation notes
+~~~~~~~~~~~~~~~~~
+
+Endpoints to list and create notes. No note detail endpoint is provided. Note
+can't be updated or deleted (contacting support is required if you have leaked
+some private data there). Field ``is_public`` (false by default) is responsible for
+note being visible to the other party. The only required field is "text".
+
+.. http:get:: /reservations/{reservation_id}/notes/
+.. http:post:: /reservations/{reservation_id}/notes/
+
+
+List response example::
+
+  {
+    "count": 3,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "id": 3,
+        "reservation": "9eefbecb-29be-441e-be13-c59870671940",
+        "author": "Bowali",
+        "created_at": "2020-06-04T19:57:42.962933+10:00",
+        "text": "Please note that you'll have to bring your concession document while visiting the event",
+        "is_public": true
+      },
+      {
+        "id": 2,
+        "reservation": "9eefbecb-29be-441e-be13-c59870671940",
+        "author": "Bowali",
+        "created_at": "2020-06-04T19:57:27.535222+10:00",
+        "text": "note to guide: check their IDs before making a tour",
+        "is_public": false
+      },
+      {
+        "id": 1,
+        "reservation": "9eefbecb-29be-441e-be13-c59870671940",
+        "author": "Bowali",
+        "created_at": "2020-06-04T19:57:24.983188+10:00",
+        "text": "hmm they seem to be a concession party but they didn't tell us",
+        "is_public": false
+      }
+    ]
+  }
+
