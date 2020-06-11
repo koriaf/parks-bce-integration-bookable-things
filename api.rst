@@ -96,9 +96,7 @@ Bookables list
    BCE -> parks_staff: show options from Parks system
    parks_staff -> BCE: map to bookable things\n(e.g. "spaces")\nin the Agent system
 
-.. http:get:: /bookables/?org=(org_id)&park=(park_slug)&is_archived=true/false/all
-
-  Implemented: everything except filters.
+.. http:get:: /bookables/?org_id=(org_id)&org_slug=(string)&park_slug=(park_slug)&is_archived=true/false/all
 
   Returns a list of bookable things. GET parameters are optional and filter
   the output.
@@ -111,16 +109,14 @@ Bookables list
   bookable things provided by the choosen one. It will be useful mostly for
   the "Management" scenarion, and any organisation using API is aware of this
   value for itself.
-  In the nearest future we may also use org_slug and org_name filters.
-  These will be URL-compatible strings that identifie the organisation
-  responsible for the bookable thing. e.g. "anbg-edu-team".
+  org_name - full organisation name (urlencoded)
 
-  ``is_archived`` parameter is ALL by default and can be used to access archived
-  bookables.
+  ``is_archived`` parameter is false by default and can be used to access archived
+  bookables (if you set it to all or true). They are hidden by default.
 
   In case of wrong filters parameter (park doesn't exist, org doesn't exist)
-  empty results set will be returned. We probably should return 404 or 400 in that
-  case - a matter to discuss.
+  empty results set will be returned (except the is_archived parameter where the value
+  is strictly validated to be one of all, true or false).
 
   Response example::
 
@@ -309,7 +305,7 @@ to hit it as often as they like.
    within the given date range.
 
    If no "from" parameter given then all slots since the current one (which may
-   be already started and thus not available for booking)
+   be already started and thus not available for booking). Slot start time is used.
 
    "from" and "until" dates are inclusive,
    i.e. from today includes today's availabilities,
@@ -432,9 +428,9 @@ Reservations list
 
 Implemented: except filters (but the created-received should work).
 
-.. http:get:: /reservations/?from=&until=&park=&booking_id=&agent=&
-.. http:get:: /reservations/created/?from=&until=&park=&booking_id=&agent=&
-.. http:get:: /reservations/received/?from=&until=&park=&booking_id=&agent=&
+.. http:get:: /reservations/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
+.. http:get:: /reservations/created/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
+.. http:get:: /reservations/received/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
 
     Return full list of all reservations visible to the current user.
     Filters are applied. Reservations are rendered quite deep for convenience.
@@ -442,6 +438,12 @@ Implemented: except filters (but the created-received should work).
     parties point of view: agent making reservatins for client and the
     amentity owner handling reservations and working to meet all the people
     coming to see it.
+
+    Please note that reservation object has informational readonly fields start_time
+    and end_time; you can't update them and they are filled automatically from the first
+    slot start time and the last slot end time respectively, reflecting the full
+    time period of traveller visiting the event. The filters work based on these
+    fields (filtering only by start time date)
 
     Response example::
 
@@ -484,7 +486,9 @@ Implemented: except filters (but the created-received should work).
             "units": 1,
             "customer": null,
             "created_at": "2020-05-28T21:14:05+10:00",
-            "status": "accepted"
+            "status": "accepted",
+            "start_time": "2020-05-28T12:00:00+10:00",
+            "end_time": "2020-05-28T18:00:00+10:00"
           }
         ]
       }
