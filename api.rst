@@ -6,7 +6,7 @@ by booking Agents (such as BCE)
 to create and manage bookings
 in the Parks Australia systems,
 and by the delivery organisations
-to manage bookable things and available slots.
+to manage products and available slots.
 
 .. uml:: api_overview.uml
 
@@ -38,23 +38,23 @@ then please contact us.
 
 Base workflow
 
-  * Delivery organisation create bookable thing
-  * Delivery organisation add slots (start-end datetime pair) for the bookable thing
-  * Agent organisation browses bookable things and slots available
+  * Delivery organisation create product
+  * Delivery organisation add slots (start-end datetime pair) for the product
+  * Agent organisation browses products and slots available
   * Agent organisation places reservations
   * Delivery org either confirms or denies reservations
 
-Bookable things
----------------
+Product
+-------
 
-An example of bookable thing is Tour, School excursion or Tasting event.
+Tours, School excursions or Tasting events, campgrounds and so on.
 
 Interesting fields:
 
-* type - is the bookable offered by the official park organisation or an external partner. Informational
+* type - is the product offered by the official park organisation or an external partner. Informational
 * unit - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
 * cost_per_unit - informational field, AUD per single unit.
-* available_to_agents (boolean) - is another organisation can place reservations. Set to False if you want to (temporary) stop accepting new reservations. The bookable remains visible in the list, but no slots are returned.
+* available_to_agents (boolean) - is another organisation can place reservations. Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned.
 * available_to_public (boolean) - the same logic, but has no meaning while we don't offer the API to public.
 
 Bookables list
@@ -64,18 +64,18 @@ Bookables list
 .. code-block:: gherkin
 
    As a booking agent (like BCE)
-   I need to get a list of bookable things visible to me
+   I need to get a list of products visible to me
    so that I can map Spaces to Bookable Things
    and so that I know what resources to check the availability of
 
 .. code-block:: gherkin
 
    As a delivering organisation
-   I need to get a list of bookable things I created
+   I need to get a list of products I created
    so I can manage them:
    * manage slots
    * manage reservations
-   * manage bookable things itself
+   * manage products itself
 
 
 .. uml::
@@ -84,21 +84,21 @@ Bookables list
    box "Booking Agent" #lightblue
       participant "Agent\nSystem" as BCE
    end box
-   parks_staff -> BCE: configure bookable things\nfrom the Parks system\nin the agent's system
+   parks_staff -> BCE: configure products\nfrom the Parks system\nin the agent's system
    box "Parks System" #lightgreen
-      boundary "<<API>>\n/parks/{park-slug}/bookables\n?team={org-slug}" as get_list_bookables
-      database "bookable\nthings" as bookable_things
+      boundary "<<API>>\n/parks/{park-slug}/products\n?team={org-slug}" as get_list_products
+      database "product\nthings" as product_things
    end box
-   BCE -> get_list_bookables: GET
-   get_list_bookables -> bookable_things: query_list(\n  park=park-slug,\n  org=team-slug\n)
+   BCE -> get_list_products: GET
+   get_list_products -> product_things: query_list(\n  park=park-slug,\n  org=team-slug\n)
 
-   get_list_bookables -> BCE: json data
+   get_list_products -> BCE: json data
    BCE -> parks_staff: show options from Parks system
-   parks_staff -> BCE: map to bookable things\n(e.g. "spaces")\nin the Agent system
+   parks_staff -> BCE: map to products\n(e.g. "spaces")\nin the Agent system
 
-.. http:get:: /bookables/?org_id=(org_id)&org_slug=(string)&park_slug=(park_slug)&is_archived=true/false/all
+.. http:get:: /products/?org_id=(org_id)&org_slug=(string)&park_slug=(park_slug)&is_archived=true/false/all
 
-  Returns a list of bookable things. GET parameters are optional and filter
+  Returns a list of products. GET parameters are optional and filter
   the output.
 
   The "park_slug" is a URL-compatible string
@@ -106,13 +106,13 @@ Bookables list
   for the Australian National Botanic Gardens or "kakadu" or "booderee".
 
   The "org_id" is a short number identifying the organisation to display only
-  bookable things provided by the choosen one. It will be useful mostly for
+  products provided by the choosen one. It will be useful mostly for
   the "Management" scenarion, and any organisation using API is aware of this
   value for itself.
   org_name - full organisation name (urlencoded)
 
   ``is_archived`` parameter is false by default and can be used to access archived
-  bookables (if you set it to all or true). They are hidden by default.
+  products (if you set it to all or true). They are hidden by default.
 
   In case of wrong filters parameter (park doesn't exist, org doesn't exist)
   empty results set will be returned (except the is_archived parameter where the value
@@ -132,7 +132,7 @@ Bookables list
           "delivery_org": "Bowali",
           "name": "Naidoc Week",
           "short_description": "",
-          "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
+          "image": "http://localhost:8000/media/products_images/ObQOeL8uJqY.jpg",
           "contact": "",
           "unit": "person",
           "cost_per_unit": "6.00",
@@ -158,7 +158,7 @@ Bookables list
 Bookable creation
 ~~~~~~~~~~~~~~~~~
 
-.. http:post:: /bookables/
+.. http:post:: /products/
 
 .. code-block:: gherkin
 
@@ -221,7 +221,7 @@ Bookable creation
 Bookable details
 ~~~~~~~~~~~~~~~~
 
-.. http:get:: /bookables/(bookable_id)/
+.. http:get:: /products/(product_id)/
 
   Returns the same response format as the previous endpoint
   but for the single object.
@@ -230,7 +230,7 @@ Bookable details
 Bookable update
 ~~~~~~~~~~~~~~~
 
-.. http:patch:: /bookables/(bookable_id)/
+.. http:patch:: /products/(product_id)/
 
   Payload: set of non-readonly fields (like "short_description")
 
@@ -241,16 +241,16 @@ Bookable update
 Bookable delete
 ~~~~~~~~~~~~~~~
 
-.. http:delete:: /bookables/(bookable_id)/
+.. http:delete:: /products/(product_id)/
 
   Payload: none.
 
   Returns: empty response with 204 code or 4xx error message.
 
-  In case of no reservations created the bookable and all its slots are deleted.
-  In case of at least one reservation (including not confirmed) present the bookable
-  is marked as "is_archived" and will not be shown in the bookables list by default,
-  but it's possible to display archived as well. Archived bookables can't accept any more reservations.
+  In case of no reservations created the product and all its slots are deleted.
+  In case of at least one reservation (including not confirmed) present the product
+  is marked as "is_archived" and will not be shown in the products list by default,
+  but it's possible to display archived as well. Archived products can't accept any more reservations.
 
 
 Slots
@@ -264,7 +264,7 @@ Reservations are created against one or more slots.
 Slots list
 ~~~~~~~~~~
 
-(check availability of bookable thing)
+(check availability of product)
 
 Implemented: everything except filters.
 
@@ -272,7 +272,7 @@ Implemented: everything except filters.
 
    So that users can plan a school excursion to Canberra
    they need to check the availability
-      of an individual bookable thing
+      of an individual product
       at a particular park
       (optionally, within a date range)
    using the "check availability" API
@@ -291,32 +291,25 @@ to hit it as often as they like.
    end box
    box "Parks System" #lightgreen
       boundary "<<API>>\n.../availability\n?from=$date\n&to=$date" as get_availability
-      database "bookable\nthings" as bookable_things
+      database "product\nthings" as product_things
    end box
    BCE -> get_availability: GET
-   get_availability -> bookable_things: query_availability(\n  bookable=id,\n  from=from_date\n  to=to_date)
+   get_availability -> product_things: query_availability(\n  product=id,\n  from=from_date\n  to=to_date)
    get_availability -> BCE: json data
 
 
-.. http:get:: /bookables/(bookable_id)/slots/?from=(date: from_date)&until=(date: to_date)
+.. http:get:: /products/(product_id)/slots/?from=(datetimeZ)&until=(datetimeZ)
 
    Returns a list of available time slots
-   for a bookable thing,
+   for a product,
    within the given date range.
 
-   If no "from" parameter given then all slots since the current one (which may
-   be already started and thus not available for booking). Slot start time is used.
+   If no "from" parameter is given then all slots since the current one (which may
+   be already started and thus not available for booking) are returned.
+   Filter is performed using the slot end time.
 
-   "from" and "until" dates are inclusive,
-   i.e. from today includes today's availabilities,
-   and until tomorrow includes tomorrow's.
-
-   The "from" and "until" parameters
-   may be an ISO-8601 date string (`YYYY-MM-DD`).
-   Having dates here help us to cache things,
-   please do more detailed filtering on the client side.
-   Regarding the timezone: the server timezone will be used, so for night
-   events it's practical to get the previous and the next days (if you are not sure).
+   "from" and "until" datetimes are inclusive. They muse be provided in ISO format
+   with mandatory UTC timezone (example: ``2020-05-28T17:00:00Z``)
 
    If no "until" parameter is given,
    then either for all of the future
@@ -335,10 +328,10 @@ to hit it as often as they like.
    In which case it serves you right.
 
    "from" and "until" dates in the past will return you
-   archived slots, which is useful if you are bookable thing owner
+   archived slots, which is useful if you are product owner
    and want to update it.
 
-   Regarding max and reserved units: some bookables support multiple persons
+   Regarding max and reserved units: some products support multiple persons
    or groups at the same time, so if ``reserved_units`` value is less than max then it
    still can be reserved. We return fully booked slots as well for informational
    reasons - some reservations may be cancelled so worth to check later.
@@ -375,7 +368,7 @@ to hit it as often as they like.
     }
 
    Notes:
-    * if the bookable thing doesn't exist, 404
+    * if the product doesn't exist, 404
     * if there are no slots defined then the empty list is returned.
     * if the from date is after the until date
       you will get an error message.
@@ -386,11 +379,11 @@ to hit it as often as they like.
 Slot create
 ~~~~~~~~~~~
 
-.. http:post:: /bookables/(bookable_id)/slots/
+.. http:post:: /products/(product_id)/slots/
 
   .. code-block:: gherkin
 
-    As a bookable thing owner
+    As a product owner
     I'd like to create a new slot and specify time for it
     so people can make reservations for it
 
@@ -415,9 +408,9 @@ Reservation
 -----------
 
 Reservation is a representation of fact that somebody will come to an event.
-They are always created for given bookable and given slots set (one or more).
+They are always created for given product and given slots set (one or more).
 Has some status flow (from pending to completed) and it's expected
-that both parties (reservation initiator and bookable thing delivery org)
+that both parties (reservation initiator and product delivery org)
 update them based on the status flow.
 
 Please note that the reservation IDs are string, not integer field, containing
@@ -428,9 +421,9 @@ Reservations list
 
 Implemented: except filters (but the created-received should work).
 
-.. http:get:: /reservations/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
-.. http:get:: /reservations/created/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
-.. http:get:: /reservations/received/?from=&until=&park_slug=&bookable_id=&delivery_org_id=&delivery_org_name=&
+.. http:get:: /reservations/?from=&until=&park_slug=&product_id=&delivery_org_id=&delivery_org_name=&
+.. http:get:: /reservations/created/?from=&until=&park_slug=&product_id=&delivery_org_id=&delivery_org_name=&
+.. http:get:: /reservations/received/?from=&until=&park_slug=&product_id=&delivery_org_id=&delivery_org_name=&
 
     Return full list of all reservations visible to the current user.
     Filters are applied. Reservations are rendered quite deep for convenience.
@@ -442,8 +435,8 @@ Implemented: except filters (but the created-received should work).
     Please note that reservation object has informational readonly fields start_time
     and end_time; you can't update them and they are filled automatically from the first
     slot start time and the last slot end time respectively, reflecting the full
-    time period of traveller visiting the event. The filters work based on these
-    fields (filtering only by start time date)
+    time period of traveller visiting the event. The date filters work based on these
+    fields (so only reservations which are active for the filtering period are returned). Default "from" value is today, "until" is some date in the far future.
 
     Response example::
 
@@ -454,14 +447,14 @@ Implemented: except filters (but the created-received should work).
         "results": [
           {
             "id": "9eefbecb-29be-441e-be13-c59870671940",
-            "bookable": {
+            "product": {
               "id": 2,
               "type": "park",
               "park": "kakadu",
               "delivery_org": "Bowali",
               "name": "Naidoc Week",
               "short_description": "",
-              "image": "http://localhost:8000/media/bookables_images/ObQOeL8uJqY.jpg",
+              "image": "http://localhost:8000/media/products_images/ObQOeL8uJqY.jpg",
               "contact": "",
               "unit": "person",
               "cost_per_unit": "6.00"
@@ -508,7 +501,7 @@ Reservation create
   The request example::
 
     {
-      "bookable_id": 1,
+      "product_id": 1,
       "slots": [1, 2, 3],
       "units": 1,
       "customer": {
@@ -523,7 +516,7 @@ Reservation create
   "Customer" field is not much defined currently but will contain some data
   useful for both parties to identify the coming people.
 
-  The original agent (booking creator) and the bookable delivery organisation
+  The original agent (booking creator) and the product delivery organisation
   will be able to update it (change status, provide more details, etc).
 
 
