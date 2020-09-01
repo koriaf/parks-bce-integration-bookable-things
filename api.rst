@@ -57,15 +57,15 @@ Interesting fields:
 * available_to_agents (boolean) - is another organisation can place reservations. Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned.
 * available_to_public (boolean) - the same logic, but has no meaning while we don't offer the API to public.
 
-Bookables list
-~~~~~~~~~~~~~~
+Products list
+~~~~~~~~~~~~~
 ..for the current organisation
 
 .. code-block:: gherkin
 
    As a booking agent (like BCE)
    I need to get a list of products visible to me
-   so that I can map Spaces to Bookable Things
+   so that I can map Spaces to Product Things
    and so that I know what resources to check the availability of
 
 .. code-block:: gherkin
@@ -155,15 +155,15 @@ Bookables list
     }
 
 
-Bookable creation
-~~~~~~~~~~~~~~~~~
+Product creation
+~~~~~~~~~~~~~~~~
 
 .. http:post:: /products/
 
 .. code-block:: gherkin
 
    As a delivering organisation
-   I want to create a "Bookable Thing"
+   I want to create a "Product Thing"
    so agent organisation can book my time
 
   The current organisation becomes ``delivery_org``. ``customer`` field will
@@ -173,7 +173,7 @@ Bookable creation
   Minimal request example::
 
     {
-        "name": "First Bookable",
+        "name": "First Product",
         "unit": "person",
         "park": "kakadu"
     }
@@ -181,14 +181,18 @@ Bookable creation
   Full request example::
 
     {
-        "name": "First Bookable '${NOW}'",
+        "name": "First Product",
         "unit": "person",
         "park": "kakadu",
         "short_description": "night walk",
-        "cost_per_unit": "55.00"
+        "cost_per_unit": "55.00",
+        "image": "(full image url goes here - see notes"
     }
 
-  Success response: the same as the Bookables list endpoint but without pagination.
+  Success response: the same as the Products list endpoint but without pagination.
+
+  Note about the image: it's a text field where you should pass the exact absolute url
+  what has been returned to you by the image upload endpoint. No other urls will be accepted for security reasons. The field is optional.
 
 
   Error response example::
@@ -218,8 +222,8 @@ Bookable creation
     }
 
 
-Bookable details
-~~~~~~~~~~~~~~~~
+Product details
+~~~~~~~~~~~~~~~
 
 .. http:get:: /products/(product_id)/
 
@@ -227,8 +231,8 @@ Bookable details
   but for the single object.
 
 
-Bookable update
-~~~~~~~~~~~~~~~
+Product update
+~~~~~~~~~~~~~~
 
 .. http:patch:: /products/(product_id)/
 
@@ -238,8 +242,8 @@ Bookable update
   error message if any happened (code 4xx).
 
 
-Bookable delete
-~~~~~~~~~~~~~~~
+Product delete
+~~~~~~~~~~~~~~
 
 .. http:delete:: /products/(product_id)/
 
@@ -251,6 +255,29 @@ Bookable delete
   In case of at least one reservation (including not confirmed) present the product
   is marked as "is_archived" and will not be shown in the products list by default,
   but it's possible to display archived as well. Archived products can't accept any more reservations.
+
+
+Product image upload
+~~~~~~~~~~~~~~~~~~~~
+
+This is multipart/form request where you send an image (jpeg or png) file as ``file`` parameter and the next response is returned::
+
+    {
+        "url": "https://domain/url/"
+    }
+
+After uploaded you can reference the image using the url or put it into the "image"
+field on product creation/update.
+
+Please note that images not assigned to products will be removed after 7 days.
+
+Please pass full url including protocol and domain name to the product update/create endpoints. Links to domains/services other than our own are not allowed for security
+reasons.
+
+Please keep your files reasonable small (a typical photo from a mobile phone which is 5MB+ big is not a good choice).
+
+The request is authenticated as usual while the image file is available without any auth
+after uploaded.
 
 
 Slots
