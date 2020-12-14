@@ -39,8 +39,8 @@ then please contact us.
 Base workflow
 
   * Delivery organisation create product
-  * Delivery organisation add slots (start-end datetime pair) for the product
-  * Agent organisation browses products and slots available
+  * Delivery organisation adds slots (start-end datetime pair and some extra parameters) for the product
+  * Agent organisation browses products and sees slots available
   * Agent organisation places reservations
   * Delivery org either confirms or denies reservations
 
@@ -78,15 +78,18 @@ Product
 
 Interesting fields:
 
-* type - is the product offered by the official park organisation or an external partner. Informational
-* unit - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
-* cost_per_unit - informational field, AUD per single unit. Decimal of format "xxxx.xx"
-* available_to_agents (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
-* available_to_public (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
-* spaces_required - contains list (possibly empty) of spaces which are booked for each
-reservation for this product; having the space busy stops the reservation placement process.
-Please note that although sub-keys like ``index`` or ``minutes`` are present they aren't fully
-supported. See spaces list endpoint for getting their list with readable name and some details.
+* ``type`` - is the product offered by the official park organisation or an external partner. Informational
+* ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
+* ``cost_per_unit`` - informational field, AUD per single unit. Decimal of format "xxxx.xx"
+* ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
+* ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
+* ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy stops the reservation placement process.  Please note that although sub-keys like ``index`` or ``minutes`` are present they aren't fully supported. See spaces list endpoint for getting their list with readable name and some details.
+
+    * ``spaces_required.i.space_id`` - UUID of the space, used to reference it, unique
+    * ``spaces_required.i.index`` - index of this space for this product; for example, if product assumes group moved from one space to another after some time (see "start_from_minutes") there will be multipe rows in ``spaces_required`` list with index 1, 2, 3 and so on. Not fully supported yet but is present to start collecting the data.
+    * ``spaces_required.i.start_from_minutes`` - see ``index`` - for indexes > 1 contains number of minutes when the group moved to this space
+    * ``spaces_required.i.index_percentage`` - for future usage and for cases when multiple products are using single space simultaneously.
+    * ``spaces_required.i.minutes`` - for future usage and products using space simultaneously; number of minutes (of the slot) when space uses the product. Null for default behavious, different values are saved but change nothing.
 
 
 Products list
@@ -418,6 +421,10 @@ to hit it as often as they like.
    still can be reserved. We return fully booked slots as well for informational
    reasons - some reservations may be cancelled so worth to check later.
 
+   Please note that this doesn't reflect space availability; so even if given slot is free
+   the busy space still can stop the reservation process. See space reservations endpoint
+   for details about their availability.
+
    Response example::
 
     {
@@ -500,8 +507,6 @@ some unique value (typically UUID but we won't guarantee it)
 
 Reservations list
 ~~~~~~~~~~~~~~~~~
-
-Implemented: except filters (but the created-received should work).
 
 .. http:get:: /reservations/?from=&until=&park_slug=&product_id=&delivery_org_id=&delivery_org_name=&
 .. http:get:: /reservations/created/?from=&until=&park_slug=&product_id=&delivery_org_id=&delivery_org_name=&
@@ -596,10 +601,15 @@ Reservation create
   (some of them filled automatically, some of them empty).
 
   "Customer" field is not much defined currently but will contain some data
-  useful for both parties to identify the coming people.
+  useful for both parties to identify the coming people. Please come to us with
+  your requirements for that field if you need something specific here.
 
   The original agent (booking creator) and the product delivery organisation
   will be able to update it (change status, provide more details, etc).
+
+  When placing the reservation, for cases when some space(s) assigned, the space
+  reservation will be performed as well transparently to user (if success) or
+  error about space busy will be raised (if failed).
 
 
 Reservation update
@@ -622,10 +632,10 @@ Reservation update
   * delivery_org: confirm reservation cancellation (status="cancelled")
 
 
-Reservation notes
-~~~~~~~~~~~~~~~~~
+Reservation notes (RNs)
+~~~~~~~~~~~~~~~~~~~~~~~
 
-Endpoints to list and create notes. No note detail endpoint is provided. Note
+Endpoints to list and create RNs. No note detail endpoint is provided. RNs
 can't be updated or deleted (contacting support is required if you have leaked
 some private data there). Field ``is_public`` (false by default) is responsible for
 note being visible to the other party. The only required field is "text".
@@ -710,14 +720,14 @@ Response example::
 
 Fields::
 
-  * created_by_org - any space has the owner, usually it's park own organisations
-  * visible_to_orgs - in case of non-public spaces only set list of organisations + the owner see it
-  * is_indoor is just an informational field
-  * capacity is informational field without any logic constraints currently
+  * ``created_by_org`` - any space has the owner, usually it's park own organisations
+  * ``visible_to_orgs`` - in case of non-public spaces only set list of organisations + the owner see it
+  * ``is_indoor`` is just an informational field
+  * ``capacity`` is an informational field without any logic constraints (yet). ``unit`` can be any string, ``qty`` is a positive integer.
 
 
-Spaces list
-~~~~~~~~~~~
+Space reservations list
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. http:get:: /spaces/{space_id}/reservations/
 
