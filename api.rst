@@ -73,6 +73,35 @@ product reservation and is created just after it
 **Reservation note** - some text used to help delivery org and agent (booking) or to communicate
 
 
+Rules
+-----
+
+Some constraints help us to keep the system in logical and strict state.
+They can be hard (logically correct) or soft (just here to keep things simpler but can be avoided)
+
+Soft:
+
+* You can't update buffer times of product with active future reservations when these buffer times are in action (this will require freeing some slots or auto-booking other ones and the logic of that is not discussed/determined yet)
+* You can't change slot start/end time once reservations are placed for it (because it means that customer experience changes, and they should be at least aware of that - logic of such notifications/approvals is not determined yet)
+
+Hard:
+
+* product with reservations can't be deleted, only deactivated (thus stopping new reservatiosn from appearing)
+* slots with reservations can't be deleted (but can have their units number decreased so no new reservations are placed for them)
+
+
+Reservation workflow
+--------------------
+
+Once placed, the reservation goes from one status to another, triggering some actions
+(like notification email sent) when moving to/from specific statuses.
+
+This workflow is still to determine but generally next rules may be applied:
+
+* Once the status changes to/from X we send email to customer/agent/deliveryorg
+* Once the status in X it can be changed only to Y
+* Object may change its status to X by agent/deliveryorg/both action
+
 Product
 -------
 
@@ -241,7 +270,9 @@ Product creation
         "short_description": "night walk",
         "cost_per_unit": "55.00",
         "image": "(full image url goes here - see notes",
-        "spaces_required": [the same format as the product list]
+        "spaces_required": [the same format as the product list],
+        "time_setup": 0,
+        "time_packup": 0,
     }
 
   Success response: the same as the Products list endpoint but without pagination.
@@ -253,6 +284,11 @@ Product creation
   space reservations along with the product reservation. Please note that once provided
   the busy space will block the reservation creation.
 
+  ``time_setup`` and ``time_packup`` is used to add buffer times at the beginning/end of each reservation, meaning that no other
+  activities may be performed for that product for this number of units. So, for example, if you have these values set then
+  adjacent slots will be automatically blocked (booked indirectly) to display the fact that somebody is doing something
+  on the spot. If interval between the slots is bigger than setup+packup time then no limits are applied and no indirectly
+  booked slots are created.
 
   Error response example::
 
@@ -345,7 +381,14 @@ Slots
 
 Slot is just a start-end datetime pair with some extra data attached.
 The start date is usually inclusive while the end date is exclusive.
-Reservations are created against one or more slots.
+Reservations are created against one or more slots. Slot can be reserved
+directly (when you place reservation for that slot, default behaviour)
+or indirectly (the slot is disabled due to buffer time). Directly reserved slot
+can't change start/end time while indirectly reserved one can.
+
+If you create slot and there is buffer time set for this product and there is reservation
+which buffer time touches the slot then this slot may be reserved from the start (at least
+some number of units in it).
 
 
 Slots list
@@ -437,21 +480,27 @@ to hit it as often as they like.
           "start_time": "2020-05-28T12:00:00+10:00",
           "end_time": "2020-05-28T13:00:00+10:00",
           "max_units": 2,
-          "reserved_units": 1
+          "reserved_units": 1,
+          "direct_reserved_units": 1,
+          "indirect_reserved_units": 0
         },
         {
           "id": 2,
           "start_time": "2020-05-28T17:00:00+10:00",
           "end_time": "2020-05-28T18:00:00+10:00",
           "max_units": 1,
-          "reserved_units": 1
+          "reserved_units": 1,
+          "direct_reserved_units": 1,
+          "indirect_reserved_units": 0
         },
         {
           "id": 3,
           "start_time": "2020-05-30T02:50:42+10:00",
           "end_time": "2020-05-30T05:50:43+10:00",
           "max_units": 3,
-          "reserved_units": 0
+          "reserved_units": 0,
+          "direct_reserved_units": 0,
+          "indirect_reserved_units": 0
         }
       ]
     }
