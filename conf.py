@@ -1,7 +1,7 @@
-project = 'parks-bce-integration-bookable-things'
+project = 'Bookings API'
 copyright = '2020, Chris Gough'
 author = 'Chris Gough'
-release = '0.0'
+release = '0.1'
 extensions = [
     'sphinxcontrib.plantuml',
     'sphinxcontrib.httpdomain'
@@ -9,7 +9,7 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = [
     '_build', 'Thumbs.db', '.DS_Store',
-    '.venv'
+    '.venv', '.git',
 ]
 html_theme = 'alabaster'
 html_static_path = ['_static']
