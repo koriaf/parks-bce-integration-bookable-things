@@ -1,6 +1,16 @@
 Products
 ========
 
+Interesting fields are:
+
+* ``type`` - is the product offered by the official park organisation or an external partner. Informational
+* ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
+* ``cost_per_unit`` - informational field, AUD per single unit. Decimal of format "xxxx.xx". This is the current value. Clients must consider ``price_schedule`` if they are placing reservations for far future because price may change.
+* ``price_schedule`` - dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_init``.
+* ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
+* ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
+* ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
+
 Products list
 -------------
 ..for the current organisation
@@ -44,20 +54,21 @@ Products list
 
   Returns a list of products with pagination and short information about them.
 
-  The next GET parameters (optional) are supported:
+  Optional GET parameters to filter:
 
-    * **park_slug** is a URL-compatible string that identifies the park, e.g. "anbg"
-      for the Australian National Botanic Gardens or "kakadu" or "booderee".
+    * **park_slug** is an URL-compatible string that identifies the park, e.g. "anbg"
+      for the Australian National Botanic Gardens or "kakadu" or "booderee" or "uluru".
 
     * **org_id** is a short number identifying the organisation to display only
       products provided by the choosen one. It will be useful mostly for
-      the "Management" scenarion, and any organisation using API is aware of this
-      value for itself. See the organisations list endpoint to get variants to filter on.
+      the "Management" scenario, given any organisation using API is aware of this
+      value for itself. See the organisations list endpoint to get variants to filter on or
+      configuration endpoint to retrieve ID and name of the current org.
 
     * **org_name** - full organisation name (urlencoded). Exact case insensitive match.
 
     * **is_archived** (``false`` by default) - can be used to access archived products
-      (if you set it to ``all`` or ``true``). Only active are returned by default.
+      (if you set it to ``all`` or ``true``). Only active (=false) are returned by default.
 
   In case of wrong filters parameter (park doesn't exist, org doesn't exist)
   empty results set will be returned (except the is_archived parameter where the value
@@ -81,6 +92,10 @@ Products list
           "contact": "",
           "unit": "person",
           "cost_per_unit": "6.00",
+          "price_schedule": {
+            "2025-01-01": "7",
+            "2030-01-01": "8.00",
+          }
           "is_archived": false,
           "spaces_required": [
             {
@@ -103,6 +118,7 @@ Products list
           "contact": "",
           "unit": "person",
           "cost_per_unit": "21.00",
+          "price_schedule": {},
           "is_archived": false,
           "spaces_required": [
             {
@@ -215,6 +231,9 @@ Product update
 
   Returns the same response format as the GET method in case of success (code 200) or
   error message if any happened (code 4xx).
+
+  Please use actual product version before updating and use patch on minimal set of fields
+  to avoid overwritting data changed on server (for example cost per unit changed due to the schedule)
 
 
 Product delete

@@ -154,14 +154,23 @@ Space-Product relationship has the next important fields:
 
     ** ``start_from_minutes`` (0 by default) - if you want product action to be moved from spaceA to spaceB then set this value to 0 for the first space in the list, then to N for the second, and L for the third, so space owner knows that space B is free for first N minutes and space A is free after first N minutes and so on.
 
-Product
--------
 
-Interesting fields:
+Configuration endpoint
+----------------------
 
-* ``type`` - is the product offered by the official park organisation or an external partner. Informational
-* ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
-* ``cost_per_unit`` - informational field, AUD per single unit. Decimal of format "xxxx.xx"
-* ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
-* ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
-* ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
+With the correct api key or cookies returns base information about the current auth.
+
+.. http:get:: /conf/
+
+Response example::
+
+    {
+      "current_org": {
+        "id": 19,
+        "name": "Entry Station",
+        "type": "Parks Australia"
+      },
+      "parks": [
+        "uluru"
+      ]
+    }
