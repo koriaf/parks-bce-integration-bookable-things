@@ -6,7 +6,7 @@ Interesting fields are:
 * ``type`` - is the product offered by the official park organisation or an external partner. Informational
 * ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
 * ``cost_per_unit`` - informational field, AUD per single unit. Decimal of format "xxxx.xx". This is the current value. Clients must consider ``price_schedule`` if they are placing reservations for far future because price may change.
-* ``price_schedule`` - dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_init``.
+* ``price_schedule`` - dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_unit``.
 * ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
 * ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
 * ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
@@ -95,7 +95,7 @@ Products list
           "price_schedule": {
             "2025-01-01": "7",
             "2030-01-01": "8.00",
-          }
+          },
           "is_archived": false,
           "spaces_required": [
             {
@@ -165,7 +165,8 @@ Full request example::
         "park": "kakadu",
         "short_description": "night walk",
         "cost_per_unit": "55.00",
-        "image": "(full image url goes here - see notes",
+        "price_schedule": {the same format as the product list},
+        "image": "full image url goes here - see notes",
         "spaces_required": [the same format as the product list],
         "time_setup": 0,
         "time_packup": 0,
@@ -218,7 +219,7 @@ Product details
 
 .. http:get:: /products/(product_id)/
 
-  Returns the same response format as the previous endpoint
+  Returns the same response format as the "products list" endpoint
   but for the single object.
 
 
@@ -227,7 +228,7 @@ Product update
 
 .. http:patch:: /products/(product_id)/
 
-  Payload: set of non-readonly fields (like "short_description")
+  Payload: set of non-readonly fields (like "short_description"); see products list endpoint for details
 
   Returns the same response format as the GET method in case of success (code 200) or
   error message if any happened (code 4xx).
