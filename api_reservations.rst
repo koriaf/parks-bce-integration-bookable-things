@@ -28,7 +28,16 @@ Reservations list
     and end_time; you can't update them and they are filled automatically from the first
     slot start time and the last slot end time respectively, reflecting the full
     time period of traveller visiting the event. The date filters work based on these
-    fields (so only reservations which are active for the filtering period are returned). Default "from" value is today, "until" is some date in the far future.
+    fields (so only reservations which are active for the filtering period are returned).
+    Default "from" value is today, "until" is some date in the far future.
+
+    The ``extra_data`` field contains anything related to the business logic and subject are without much validation
+    from the server side; useful for storing confirmation, completion and form data like shown on the example.
+    None of these fields are required.
+    Confirmation and completion data is updated either by a separate POST requests (see related endpoints)
+    or directly using the reservation update endpoint.
+    Users may add other keys in the future to follow their changing requirements, but should care about
+    validation of that data themselves.
 
     Response example::
 
@@ -73,10 +82,70 @@ Reservations list
             "created_at": "2020-05-28T21:14:05+10:00",
             "status": "accepted",
             "start_time": "2020-05-28T12:00:00+10:00",
-            "end_time": "2020-05-28T18:00:00+10:00"
+            "end_time": "2020-05-28T18:00:00+10:00",
+            "extra_data": {
+              {
+                "formData": {
+                  "school": {
+                    "street_address": "ABC Street",
+                    "adults_attending": 1,
+                    "students_attending": 1
+                  },
+                  "billing": {
+                    "country": "AU"
+                  },
+                },
+                "formVersionId": "a4883d73-02c3-4a70-844b-6d5475b79ce9",
+                "confirmationData": {
+                  "confirmedAt": "2021-02-18T09:41:56.929779+00:00"
+                },
+                "confirmationDataSchema": {},
+                "completionData": {
+                  "completedAt": "2021-02-18T17:12:35.345484+00:00"
+                },
+                "completionDataSchema": {}
+              }
+            }
           }
         ]
       }
+
+
+Reservations confirmation and completion
+----------------------------------------
+
+.. http:post:: /reservations/{reservation_id}/confirmation-data/
+.. http:post:: /reservations/{reservation_id}/completion-data/
+
+These two endpoints are simular and are used to save extra data and update the reservation status.
+
+In the current API version they are available both to delivery and agent orgs; although changing
+status to "confirmed" is available only to delivery org.
+
+Both endpoints save payloads to ``Reservation.extra_data`` field of the reservation related; you can
+update that field directly using the reservation update endpoint itself.
+
+The data is not validated against the schema yet, but it may be introduced in the future. Empty schema is fine.
+
+Only POST requests are accepted to reflect the nature of these endpoints. Use reservation details endpoint
+to retrieve the actual version of it.
+
+**Confirmation**
+
+Payload should contain 2 dicts: ``confirmationData`` and ``confirmationDataSchema`` of any format.
+
+Response is either 200 with full reservation detail response or an error response.
+
+If called by delivery org and status is "pending" then status is changed to "confirmed" automaticaly.
+
+**Completion**
+
+Payload should contain 2 dicts: ``completionData`` and ``completionDataSchema`` of any format.
+
+Response is either 200 with full reservation detail response or an error response.
+
+If status is "confirmed" then changed to "completed" automatically; if not then only that extra data is saved.
+
 
 
 Reservation create
@@ -98,6 +167,9 @@ Reservation create
       "units": 1,
       "customer": {
         "name": "st. Martin's school"
+      },
+      "extra_data": {
+        "field1": "value1"
       }
     }
 
@@ -182,3 +254,19 @@ List response example::
       }
     ]
   }
+
+
+Reservation history
+-------------------
+
+Return full list of historical versions of that reservation.
+It's a typical paginated list result with each item a rendered Reservation instance with small differences:
+
+* ``product`` and ``created_at`` fields are omited because they are the same - get them from the actual version (note though that if product changes then it's history lost here)
+* ``history_date`` field is added, containing ISO8601 datetime of that history element created (the moment of update event)
+
+Ordered "newest first". Please note that each history item contains new version of that record, not old, so the first one (the most recent) is equal to the actual reservation.
+
+During the transition period (while this functionality is fresh) historical records may not be present, but any reservations created after this endpoint is available will be fine.
+
+.. http:get:: /reservations/{reservation_id}/history/
