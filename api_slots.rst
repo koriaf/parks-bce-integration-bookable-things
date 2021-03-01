@@ -160,5 +160,7 @@ Slot create
 
     {"code":"FRS-400","title":"ValidationError","detail":{"start_time":["This field is required."],"end_time":["This field is required."]}}
 
-  Succesfull response contains full slot information
-  in the same format as the slots list returns.
+  Succesfull response contains full slot information in the same format as the slots list returns.
+
+  Tip: if you send a list of dicts instead of single dict - multiple slots will be created.
+  Error handlng strategy is "all or none", so single error means that no slot will be created by this request.
