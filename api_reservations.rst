@@ -24,6 +24,10 @@ Reservations list
     amentity owner handling reservations and working to meet all the people
     coming to see it.
 
+    Optional GET "sort" field (default is "chronological" which means "by start date smaller first") can
+    contain one of the values "chronological", "product_name", "units", "agent_name", "total_cost"
+    with optional "-" sign in front of it to change the direction.
+
     Please note that reservation object has informational readonly fields start_time
     and end_time; you can't update them and they are filled automatically from the first
     slot start time and the last slot end time respectively, reflecting the full
@@ -58,7 +62,10 @@ Reservations list
               "image": "http://localhost:8000/media/products_images/ObQOeL8uJqY.jpg",
               "contact": "",
               "unit": "person",
-              "cost_per_unit": "6.00"
+              "cost_per_unit": "6.00",
+              "minimum_units":null,
+              "minimum_minutes":null,
+              "maximum_minutes":null
             },
             "slots": [
               {
@@ -83,6 +90,7 @@ Reservations list
             "status": "accepted",
             "start_time": "2020-05-28T12:00:00+10:00",
             "end_time": "2020-05-28T18:00:00+10:00",
+            "total_cost": "7.25",
             "extra_data": {
               {
                 "formData": {

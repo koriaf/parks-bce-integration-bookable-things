@@ -10,6 +10,7 @@ Interesting fields are:
 * ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
 * ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
 * ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
+* ``minimum_units`` doesn't force validation on reservation creation step but affects Reservation.total_cost calculation (the number of units in reservations considered there can't be lower than ``minimum_units`` value for product)
 
 Products list
 -------------
@@ -118,6 +119,9 @@ Products list
           "contact": "",
           "unit": "person",
           "cost_per_unit": "21.00",
+          "minimum_units":null,
+          "minimum_minutes":null,
+          "maximum_minutes":null,
           "price_schedule": {},
           "is_archived": false,
           "spaces_required": [
