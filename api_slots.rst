@@ -164,3 +164,45 @@ Slot create
 
   Tip: if you send a list of dicts instead of single dict - multiple slots will be created.
   Error handlng strategy is "all or none", so single error means that no slot will be created by this request.
+
+
+Slot Detail
+-----------
+
+.. http:get:: /products/(product_id)/slots/(slot_id)/
+
+
+Slot Delete
+-----------
+
+.. http:delete:: /products/(product_id)/slots/(slot_id)/
+
+  Slots with active reservations can't be deleted by that endpoint.
+
+
+Slots bulk disable/delete
+--------------------------
+
+.. http:post:: /products/(product_id)/slots/delete/
+
+  * Slots that are either available or pending could be deleted
+  * Slots with confirmed reservations are not deleted but their units number is decreased so they can't accept any new ones
+
+  Request example::
+
+    {
+      "slots": [1, 2, 3, 4]
+    }
+
+  Response example::
+
+    {
+      "1": "deleted",
+      "2": "disabled",
+      "3": "deleted",
+      "4": "not-found"
+    }
+
+  Note keys are converted to string for compatibility with possible non-int IDs
+
+  If requested slot can't be found then no error is raised but response reflects that fact (for cases when someone deleted single slot while someone else was clicking the button)
