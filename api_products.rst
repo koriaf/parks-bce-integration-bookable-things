@@ -5,12 +5,81 @@ Interesting fields are:
 
 * ``type`` - is the product offered by the official park organisation or an external partner. Informational
 * ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
-* ``cost_per_unit`` - informational field, AUD per single unit. Decimal of format "xxxx.xx". This is the current value. Clients must consider ``price_schedule`` if they are placing reservations for far future because price may change.
-* ``price_schedule`` - dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_unit``.
 * ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
 * ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
 * ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
-* ``minimum_units`` doesn't force validation on reservation creation step but affects Reservation.total_cost calculation (the number of units in reservations considered there can't be lower than ``minimum_units`` value for product)
+
+* ``cost_per_unit`` - deprecated informational field, AUD per single unit. Decimal of format "xxxx.xx". This is the current value. Clients must consider ``price_schedule`` if they are placing reservations for far future because price may change.
+* ``price_schedule`` - deprecated dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_unit``.
+* ``minimum_units`` deprecated field which doesn't force validation on reservation creation step but affects Reservation.total_cost calculation (the number of units in reservations considered there can't be lower than ``minimum_units`` value for product)
+
+
+Pricing
+-------
+
+Note about product pricing: historically we were using ``cost_per_unit`` but now it's migrated to the new format. Please stop sending these 3 deprecated fields fields and start sending new ones as explained below (old fields are still supported while used). Expected UI is to allow users to select one from 3 pricing types and then, based on choice, show type-specific set of fields. Also, when placing reservation, either request number of people in groups or not (and don't allow number of units more than 1 for group reservations). Old behaviour: if the pricing_info dict is empty old pricing rules are used (multiple units per reservations are allowed and so on)
+
+Currently the pricing is purely informational and API doesn't force any payments made for reservations, but it may change soon.
+
+``pricing_info`` - new field with pricing, must be dict with required fields ``type`` (string ``person|group-simple|group-complex`` and ``multiplyPerSlot`` (bool true|false). There are other fields here but they depend on the type.
+
+* person:
+  * product unit must be "person"
+  * pricing_info dict contains pricePerPerson decimal value (required but can be 0)
+  * ``reservation price = pricing_info.pricePerPerson * units`` and `` * number_of_slots`` if multiplyPerSlot is True. Reservations placed for products with that pricing type can have multiple units.
+
+* group-simple
+  * product unit must be "group"
+  * pricing_info dict contains pricePerGroup decimal value (required but can be 0)
+  * price calculation is the same as "person" but using ``pricePerGroup`` field
+  * units per reservation value can only be 1 (reservations for 2 units at the same time are not accepted). It's done so you can provide peopleComing, peopleComingBonus values for each group separately without complicating the API; if you have 2 groups just place 2 reservations.
+  * reservations may have peopleComing and peopleComingBonus fields but they are informational
+  * product pricing info can have maxPersonsInGroup and maxBonusPersonsInGroup (optional, default null), if positive integer set then don't allow reservations to be placed if peopleComing or peopleComingBonus is bigger than max
+
+* group-complex:
+  * product unit must be "group", reservations are placed per single group
+  * pricing_info has next extra fields:
+    * baseCostPerGroup (decimal, required, can be 0)
+    * pricePerPerson (decimal, required, can be 0)
+    * pricePerBonusPerson (decimal, required, can be 0)
+    * minPersonsInGroup (integer, can be 0 if no limit). This field doesn't stop reservation from being placed in case if fewer persons arriving, but the group will always be billed at least for this number.
+    * minBonusPersonsInGroup (integer, can be 0 if no limit, the same rules apply)
+    * maxPersonsInGroup (integer, 0 if no limit applied). Doesn't allow to place a reservation for number of people in group more than this.
+    * maxBonusPersonsInGroup (integer, 0 if no limit applied). Also stops the reservation from placing if more people reported.
+  * reservation fields peopleComing and peopleComingBonus are expected to be sent (minimal values from product pricing are always used if 0/empty)
+  * price is equal to baseCostPerGroup (can be 0)
+  * plus pricePerPerson * number of persons, where number of persons is either minPersonsInGroup or peopleComing (whatever is bigger) (can be 0)
+  * plus pricePerBonusPerson * number of bonus persons, where number of bonus persons is either minBonusPersonsInGroup or peopleComingBonus (whatever is bigger) (can be 0)
+  * final price can be multiplied by number of slots if needed
+
+
+``pricing_info_schedule`` is a list of pairs like ["YYYY-MM-DD", {new-pricing-info}] - once given date arrives the new pricing info replaces current one. Reservations may be re-saved and change their price after that event. Reservations placed in the future consider this field when calculating their price. Please note that if you change price schedule and some already existing reservations are affected it can surprise users.
+
+**Example of price calculation:**
+
+Pricing info:
+
+.. code-block:: json
+
+    {
+        "type": "group-complex",
+        "multiplyPerSlot": True,
+        "baseCostPerGroup": "0.00",
+        "pricePerPerson": "10.00",
+        "pricePerBonusPerson": "1.00",
+        "minPersonsInGroup": 5,
+        "minBonusPersonsInGroup": 0,
+        "maxPersonsInGroup": 20,
+        "maxBonusPersonsInGroup": 1,
+    }
+
+Reservation:
+
+.. code-block:: json
+
+    {"units": 1, "extra_data": {"peopleComing": 10, "peopleComingBonus": 1}}
+
+Reservation is placed for 2 slots. Final price: 101.00 * 2 ((10 * 10 + 1 * 1) * 2) = 202.00
 
 Products list
 -------------
@@ -92,11 +161,17 @@ Products list
           "image": "http://localhost:8000/media/products_images/ObQOeL8uJqY.jpg",
           "contact": "",
           "unit": "person",
-          "cost_per_unit": "6.00",
-          "price_schedule": {
+          "cost_per_unit": "6.00", -- deprecated
+          "price_schedule": { -- deprecated
             "2025-01-01": "7",
             "2030-01-01": "8.00",
           },
+          "pricing_info": {
+            "type": "person",
+            "multiplyPerSlot": false,
+            "pricePerPerson": "40.00",
+          },
+          "pricing_info_schedule": [],
           "is_archived": false,
           "spaces_required": [
             {
@@ -118,11 +193,17 @@ Products list
           "image": null,
           "contact": "",
           "unit": "person",
-          "cost_per_unit": "21.00",
-          "minimum_units":null,
-          "minimum_minutes":null,
-          "maximum_minutes":null,
-          "price_schedule": {},
+          "cost_per_unit": "21.00", -- deprecated
+          "minimum_units":null, -- deprecated
+          "minimum_minutes":null, -- deprecated
+          "maximum_minutes":null, -- deprecated
+          "price_schedule": {}, -- deprecated
+          "pricing_info": {
+            "type": "person",
+            "multiplyPerSlot": false,
+            "pricePerPerson": "40.00",
+          },
+          "pricing_info_schedule": [],
           "is_archived": false,
           "spaces_required": [
             {
@@ -168,8 +249,10 @@ Full request example::
         "unit": "person",
         "park": "kakadu",
         "short_description": "night walk",
-        "cost_per_unit": "55.00",
-        "price_schedule": {the same format as the product list},
+        "cost_per_unit": "55.00", -- deprecated
+        "price_schedule": {the same format as the product list}, -- deprecated
+        "pricing_info": {..},
+        "pricing_info_schedule": [..],
         "image": "full image url goes here - see notes",
         "spaces_required": [the same format as the product list],
         "time_setup": 0,
