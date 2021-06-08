@@ -162,6 +162,8 @@ With the correct api key or cookies returns base information about the current a
 
 .. http:get:: /conf/
 
+"role" can be "admin" or "guide" or "agent" (guide is applicable for CTO and agent for retail, these 2 kinds of users are the same from the permissions perspective)
+
 Response example::
 
     {
@@ -169,6 +171,10 @@ Response example::
         "id": 19,
         "name": "Entry Station",
         "type": "Parks Australia"
+      },
+      "current_user": {
+        "user": "johnsmith@parks.gov.au",
+        "role": "admin"
       },
       "parks": [
         "uluru"
