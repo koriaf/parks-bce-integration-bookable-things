@@ -4,22 +4,27 @@ Products
 Interesting fields are:
 
 * ``type`` - is the product offered by the official park organisation or an external partner. Informational
-* ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Avaiability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
+* ``unit`` - has possible values "person" or "group" and helps to display on what basis the reservations are accepted. Availability slots (see far below) can have maximal units per reservation parameter be set (for example, 15 people or 2 groups can attend some event).
 * ``available_to_agents`` (boolean) - can another organisation place reservations? Set to False if you want to (temporary) stop accepting new reservations. The product remains visible in the list, but no slots are returned. Existing reservations are not affected by changing this flag.
 * ``available_to_public`` (boolean) - the same logic, but has no meaning while we don't offer the API to public. In the future we may have public information about product availability (calendar) and things like that. Personal data of agents placing reservations will not be shared.
 * ``spaces_required`` - contains list (possibly empty) of spaces which are booked for each reservation for this product; having the space busy (no more free units for the reservation period) stops the reservation placement process. See spaces list endpoint for getting their list with readable name and some details.
-
 * ``cost_per_unit`` - deprecated informational field, AUD per single unit. Decimal of format "xxxx.xx". This is the current value. Clients must consider ``price_schedule`` if they are placing reservations for far future because price may change.
-* ``price_schedule`` - deprecated dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is actual. Once this day comes the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict relfect the future states, the current one is available as ``cost_per_unit``.
-* ``minimum_units`` deprecated field which doesn't force validation on reservation creation step but affects Reservation.total_cost calculation (the number of units in reservations considered there can't be lower than ``minimum_units`` value for product)
+* ``price_schedule`` - deprecated dict of format 2021-02-04: 00.00, where first date is the first day (server timezone) when the new price is in effect. Once this date arrives, the 'cost per unit' field is updated automatically and the row is removed. All rows in this dict reflect future states, the current state is available as ``cost_per_unit``.
+* ``minimum_units`` deprecated field which doesn't force validation on reservation creation, but affects the Reservation.total_cost calculation (the number of units in a reservation can't be lower than the ``minimum_units`` value for the product)
 
 
 Pricing
 -------
 
-Note about product pricing: historically we were using ``cost_per_unit`` but now it's migrated to the new format. Please stop sending these 3 deprecated fields fields and start sending new ones as explained below (old fields are still supported while used). Expected UI is to allow users to select one from 3 pricing types and then, based on choice, show type-specific set of fields. Also, when placing reservation, either request number of people in groups or not (and don't allow number of units more than 1 for group reservations). Old behaviour: if the pricing_info dict is empty old pricing rules are used (multiple units per reservations are allowed and so on)
+Note about product pricing: historically we were using ``cost_per_unit`` but it has now been migrated to the new format.
+Please stop using the deprecated fields and start sending the new ones as explained below (old fields are
+still supported while used). Expected UI is to allow users to select one from 3 pricing types and then, based on
+choice, show type-specific set of fields. Also, when placing reservation, either request the number of people in groups
+or not (and don't allow number of units more than 1 for group reservations). Old behaviour: if the pricing_info dict
+is empty old pricing rules are used (multiple units per reservations are allowed and so on)
 
-Currently the pricing is purely informational and API doesn't force any payments made for reservations, but it may change soon.
+Currently the pricing is purely informational and the API doesn't force any payments to be made for reservations,
+but it may change soon.
 
 ``pricing_info`` - new field with pricing, must be dict with required fields ``type`` (string ``person|group-simple|group-complex`` and ``multiplyPerSlot`` (bool true|false). There are other fields here but they depend on the type.
 
@@ -53,7 +58,7 @@ Currently the pricing is purely informational and API doesn't force any payments
   * final price can be multiplied by number of slots if needed
 
 
-``pricing_info_schedule`` is a list of pairs like ["YYYY-MM-DD", {new-pricing-info}] - once given date arrives the new pricing info replaces current one. Reservations may be re-saved and change their price after that event. Reservations placed in the future consider this field when calculating their price. Please note that if you change price schedule and some already existing reservations are affected it can surprise users.
+``pricing_info_schedule`` is a list of pairs like ["YYYY-MM-DD", {new-pricing-info}] - once given date arrives the new pricing info replaces current one. Reservations may be re-saved and change their price after that event. Reservations placed in the future consider this field when calculating their price. Please note that if you change price schedule and some already existing reservations are affected it may surprise users.
 
 **Example of price calculation:**
 

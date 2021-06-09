@@ -19,7 +19,7 @@ from the perspective of the Parks System.
      like existing CTO
    }
    DeliveryOrg o-- BookableThing
-   
+
    class Booking #lightgreen {
      status
      start_time
@@ -55,7 +55,7 @@ Delivery Org
    (the education officers for ANBG)
    however in theory it could also be a commercial tour operator.
    The Parks Staff who confirm or deny pending bookings are in this org.
-   They are also the BCE systen users that manage bookings directly in BCE
+   They are also the BCE system users that manage bookings directly in BCE
    and configure bookable education experiences in BCE.
 
 Availability
@@ -77,7 +77,7 @@ Customer
    i.e. the School (or teacher).
 
 Booking
-   An apointment to use the Bookable Thing.
+   An appointment to use the Bookable Thing.
    Made by an Agent
    on behalf of a Customer.
 
@@ -117,7 +117,7 @@ This will have one of the following 6 values:
    state "pending\ncancellation\nrequested" as pcr #lightblue
    pcr --> cancelled
    accepted --> pcr
-   note "if the booking is pending,\nthe Agent may request cancellation.\nHowever, it may be too late for\nthe Delivery Org to Cancel.\nIn this situation, the delivery org\nmay chose to cancell or accept a\nbookings with cancellaton requested" as N6
+   note "if the booking is pending,\nthe Agent may request cancellation.\nHowever, it may be too late for\nthe Delivery Org to Cancel.\nIn this situation, the delivery org\nmay chose to cancel or accept a\nbookings with cancellation requested" as N6
    N6 -up-> pcr
 
 **light green**: Only the Delivery Org can do this.
@@ -129,7 +129,7 @@ This will have one of the following 6 values:
 **yellow**: Agents or Delivery orgs can do this, with conditions.
 
 
-note about organisations
+Note about organisations
 ------------------------
 
 In the existing Parks Australia system, we have users who belong to organisations.
@@ -263,7 +263,7 @@ outside the validity period of their Commercial Permit(s).
       to_datetime
       status()
    }
-   
+
    class "Partner\nBookable\nAvailability" as partner_availability extends availability {
       bookable_thing_id
       from_datetime
@@ -279,4 +279,4 @@ outside the validity period of their Commercial Permit(s).
    note "when permit status changes,\nthen the derived status()\nof the partner availability\nmay change too.\ne.g. if a permit status is revoked,\ntheir tours may be unbookable,\nexisting bookings may become\ncancellations pending, etc." as N2
    partner_availability .. N2
    cp .. N2
-   
+

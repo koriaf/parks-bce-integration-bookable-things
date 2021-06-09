@@ -15,27 +15,40 @@ too much please talk to us about it.
 
 .. admonition:: N.B.
 
-   These API's reqire an access key.
-   Access keys are managed via the trade portal UI.
+   These API's require an access token.
+   Access tokens are managed via the Trade Portal.
    See the **Security** page for details.
 
+Environments
+------------
+The API is available across three environments to cater for development, testing and production.
+
+Integration / Development
+
+- https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/
+
+Staging / User Acceptance Testing
+
+- https://staging.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/
+
+Production
+
+- https://trade.parksaustralia.gov.au/api/booking/v0/
 
 Side notes
 ----------
 
-Please note that all URLs described here use empty API prefix. The real one will be something like this::
-
-  https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/
-
-so for example endpoint ``/reservations/`` becomes::
+Please note that all URLs described within the document exclude the API prefix ``/api/booking/v0/``.
+For example the endpoint ``/reservations/`` becomes::
 
   https://integration.ecommerce.np.cp1.parksaustralia.gov.au/api/booking/v0/reservations/
 
-Also, when doing request user is probably aware of some organisation ID (short number) and having some access credentials (either API token or browser session).
+Also, when making a request, the user is probably aware of some organisation ID (short number) and having some
+access credentials (either API token or browser session).
 
-We suport pagination, objects are usually paginated by 50.
+We support pagination, objects are usually paginated by 50.
 
-Current policy allows reservation creator to update number of people/groups after
+Current policy allows the reservation creator to update the number of people/groups after
 the reservation is confirmed; if this behaviour is a problem for your organisation
 then please contact us.
 
@@ -158,11 +171,11 @@ Space-Product relationship has the next important fields:
 Configuration endpoint
 ----------------------
 
-With the correct api key or cookies returns base information about the current auth.
+With the correct API token or cookies, returns base information about the current auth.
 
 .. http:get:: /conf/
 
-"role" can be "admin" or "guide" or "agent" (guide is applicable for CTO and agent for retail, these 2 kinds of users are the same from the permissions perspective)
+"role" can be "admin", "guide" or "agent" (guide is applicable for CTO and agent for retail, these 2 kinds of users are the same from the permissions perspective)
 
 Response example::
 

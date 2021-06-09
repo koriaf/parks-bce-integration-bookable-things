@@ -4,7 +4,7 @@
 
 The purpose of this repository is so that TMA and GoSource can collaborate to develop an integration between [Book Canberra Excursions](https://www.bookcanberraexcursions.com.au/) and the Parks Australia systems used by ANBG staff (Australian National Botanic Gardens).
 
-The technichal integration between BCE will probably be at either the [trade portal](https://trade.parksaustralia.gov.au/) or [booking](https://book.parksaustralia.gov.au/) site. These things have lower environments...
+The technical integration between BCE will probably be at either the [trade portal](https://trade.parksaustralia.gov.au/) or [booking](https://book.parksaustralia.gov.au/) site. These things have lower environments.
 
 
 ## Interesting Links
