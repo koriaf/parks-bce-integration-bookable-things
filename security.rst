@@ -6,7 +6,7 @@ Security model
 --------------
 
 REST API is available once some authentication mechanism is attached to the request.
-The simplest case is the API key::
+The simplest case is the API token::
 
     Authorization: Bearer KNxNQ51vFDpu19SeSKEcqup8WzfSS5
 
@@ -25,10 +25,10 @@ Your organisation ID is typically known if you use the Parks portal.
 If you have only single organisation then the parameter is still required.
 
 
-Managing API keys
------------------
+Managing API tokens
+-------------------
 
-To manage API keys please login to the trade portal, pick the organisation you need,
+To manage API tokens please login to the trade portal, pick the organisation you need,
 and and then select "Administration->Access Tokens" menu item. This action is available
 only to org admins (vs guides or retail sales agents).
 

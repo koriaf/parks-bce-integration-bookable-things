@@ -20,8 +20,8 @@ Reservations list
     Return full list of all reservations visible to the current user.
     Filters are applied. Reservations are rendered quite deep for convenience.
     Use created/received sub-urls to look at the situation from the different
-    parties point of view: agent making reservatins for client and the
-    amentity owner handling reservations and working to meet all the people
+    parties point of view: agent making reservations for client and the
+    amenity owner handling reservations and working to meet all the people
     coming to see it.
 
     Optional GET "sort" field (default is "chronological" which means "by start date smaller first") can
@@ -125,7 +125,7 @@ Reservations confirmation and completion
 .. http:post:: /reservations/{reservation_id}/confirmation-data/
 .. http:post:: /reservations/{reservation_id}/completion-data/
 
-These two endpoints are simular and are used to save extra data and update the reservation status.
+These two endpoints are similar and are used to save extra data and update the reservation status.
 
 In the current API version they are available both to delivery and agent orgs; although changing
 status to "confirmed" is available only to delivery org.
@@ -144,7 +144,7 @@ Payload should contain 2 dicts: ``confirmationData`` and ``confirmationDataSchem
 
 Response is either 200 with full reservation detail response or an error response.
 
-If called by delivery org and status is "pending" then status is changed to "confirmed" automaticaly.
+If called by delivery org and status is "pending" then status is changed to "confirmed" automatically.
 
 **Completion**
 
@@ -212,7 +212,7 @@ Reservation update
 
   * delivery org: accept reservation - update status to "accepted"
   * delivery org: deny reservation - update status to "denied" (with some note probably)
-  * delivery org: finaize booking after fulfillment (status="completed")
+  * delivery org: finalise booking after fulfillment (status="completed")
   * agent: request reservation cancellation (status="cancellation_requested")
   * delivery_org: confirm reservation cancellation (status="cancelled")
 
@@ -270,7 +270,7 @@ Reservation history
 Return full list of historical versions of that reservation.
 It's a typical paginated list result with each item a rendered Reservation instance with small differences:
 
-* ``product`` and ``created_at`` fields are omited because they are the same - get them from the actual version (note though that if product changes then it's history lost here)
+* ``product`` and ``created_at`` fields are omitted because they are the same - get them from the actual version (note though that if product changes then it's history lost here)
 * ``history_date`` field is added, containing ISO8601 datetime of that history element created (the moment of update event)
 
 Ordered "newest first". Please note that each history item contains new version of that record, not old, so the first one (the most recent) is equal to the actual reservation.
