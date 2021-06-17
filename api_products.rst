@@ -60,6 +60,15 @@ but it may change soon.
 
 ``pricing_info_schedule`` is a list of pairs like ["YYYY-MM-DD", {new-pricing-info}] - once given date arrives the new pricing info replaces current one. Reservations may be re-saved and change their price after that event. Reservations placed in the future consider this field when calculating their price. Please note that if you change price schedule and some already existing reservations are affected it may surprise users.
 
+It is an error to provide both new and old pricing fields for the same request; so if "pricing_info" (new) is provided then you may provide "pricing_info_schedule" but can't any of the deprecated fields (cost_per_unit, minimum_units, minimum_minutes, maximum_minutes, price_schedule)
+
+If no pricing fields are provided - no reservations prices are calculated (always zeros).
+
+If product pricing row of specific type has extra fields (unknown to the server or not applicable to given type) they are silently ignored.
+
+If you have specific pricing type you can't change it from the pricing schedule from person to group (because you need to change product unit as well). In this case just handle it manually, setting correct product unit and pricing_info and pricing_info_schedule for new fields as it need to be.
+
+
 **Example of price calculation:**
 
 Pricing info:
